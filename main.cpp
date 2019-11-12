@@ -7,6 +7,7 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellData.h>
 #include <vtkCellArray.h>
+#include <chrono>
 
 constexpr double pi = 3.14159265358979323846;
 
@@ -87,7 +88,9 @@ std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt)
 
 class line {
 public:
-    explicit line(double x, double y) : _x(x), _y(y) {};
+    explicit line(double x, double y) : _x(x), _y(y) {
+        _tetra_intersections.reserve(5000);
+    };
     double x() {
         return _x;
     }
@@ -138,10 +141,10 @@ public:
          */
 
         size_t sum(0);
-        sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[2]}, id, 0b0001);
-        sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[3]}, id, 0b0010);
-        sum += find_intersections_with_polygon({tetra[0], tetra[2], tetra[3]}, id, 0b0100);
-        sum += find_intersections_with_polygon({tetra[1], tetra[2], tetra[3]}, id, 0b1000);
+        sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[2]}, id, 0b1110);
+        sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[3]}, id, 0b1101);
+        sum += find_intersections_with_polygon({tetra[0], tetra[2], tetra[3]}, id, 0b1011);
+        sum += find_intersections_with_polygon({tetra[1], tetra[2], tetra[3]}, id, 0b0111);
 
         if (sum % 2 == 1) {
             throw std::runtime_error("critical error. odd number of intersections");
@@ -339,17 +342,24 @@ int main() {
      * TODO
      * create program arguments for resolution
      */
-    size_t grid_resolution_x(200), grid_resolution_y(200);
+    size_t grid_resolution_x(1920), grid_resolution_y(1080);
     plane current_plane(grid_resolution_x, grid_resolution_y, global_boundaries);
 
     size_t min_intersections(0), max_intersections(0);
     min_intersections = max_intersections = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
+
+
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
         size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
         min_intersections = std::min(res, min_intersections);
         max_intersections = std::max(res, max_intersections);
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << "find all intersections complete in: " << timer << " ms" << std::endl;
 
     std::cout << max_intersections << std::endl;
     std::cout << min_intersections << std::endl;
