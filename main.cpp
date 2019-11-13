@@ -89,7 +89,11 @@ std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt)
 class line {
 public:
     explicit line(double x, double y) : _x(x), _y(y) {
-        _tetra_intersections.reserve(5000);
+        /*
+         * TODO:
+         * 1. optimize work with dynamic memory
+         */
+        _tetra_intersections.reserve(1);
     };
     double x() {
         return _x;
@@ -99,11 +103,19 @@ public:
     }
     void add_tetra_intersection(size_t id, const std::bitset<4>& polygon_intersections) {
 //        std::cout << "{" << x() << "," << y() << "}," << polygon_intersections << std::endl;
-        _tetra_intersections.emplace_back(id, polygon_intersections);
+//        _tetra_intersections.emplace_back(id, polygon_intersections);
+        _tetra_intersections.push_back(id);
+    }
+    size_t n() {
+
+        /*
+         * implement new data sr
+         */
+        return _tetra_intersections.size();
     }
 private:
     double _x, _y;
-    std::vector<std::pair<size_t, std::bitset<4>>> _tetra_intersections;
+    std::vector</*std::pair<*/size_t/*, std::bitset<4>>*/> _tetra_intersections;
 };
 
 class plane {
@@ -127,6 +139,17 @@ public:
             }
             current_x = current_x + _step_x;
         }
+    }
+
+    size_t find_all_intersections() {
+        size_t sum = 0;
+        for (auto &i: _lines) {
+            for (auto &j: i) {
+                sum += j.n();
+            }
+        }
+
+        return sum;
     }
 
     /*
@@ -348,7 +371,6 @@ int main() {
     size_t min_intersections(0), max_intersections(0);
     min_intersections = max_intersections = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
 
-
     auto t1 = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
@@ -363,6 +385,8 @@ int main() {
 
     std::cout << max_intersections << std::endl;
     std::cout << min_intersections << std::endl;
+
+    std::cout << current_plane.find_all_intersections() << std::endl;
 
     return 0;
 }
