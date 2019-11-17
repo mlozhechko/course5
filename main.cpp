@@ -322,7 +322,7 @@ std::vector<lite_tetrahedron> init_tetrahedron_vector(/* some boost program_opti
 }
 
 int main() {
-    std::vector<lite_tetrahedron> tetrahedron_vector = std::move(init_tetrahedron_vector());
+    std::vector<lite_tetrahedron> tetrahedron_vector = init_tetrahedron_vector();
     std::cout << tetrahedron_vector[24000] << std::endl;
 
     double angle = pi / 12.;
