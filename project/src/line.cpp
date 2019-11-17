@@ -2,10 +2,6 @@
 
 
 line::line(double x, double y) : _x(x), _y(y) {
-    /*
-     * TODO:
-     * 1. optimize work with dynamic memory
-     */
     _tetra_intersections.reserve(50);
 }
 
@@ -25,10 +21,7 @@ void line::add_tetra_intersection(size_t id, size_t polygon_id) {
     _tetra_intersections.back().set(31 - polygon_id);
     alternation_flag = !alternation_flag;
 }
-size_t line::number_of_intersections() {
 
-    /*
-     * implement new data sr
-     */
+size_t line::number_of_intersections() {
     return _tetra_intersections.size();
 }
