@@ -3,6 +3,14 @@
 #include <vector>
 #include <bitset>
 #include <iostream>
+#include <algorithm>
+
+#include <lite_tetrahedron.hpp>
+
+struct intersection_data {
+    double delta_z;
+    unsigned tetra_id;
+};
 
 class line {
 public:
@@ -14,9 +22,20 @@ public:
     void add_tetra_intersection(size_t id, size_t polygon_id);
     size_t number_of_intersections();
 
-    void calculate_intersections_alpha()
+    void calculate_intersections(const std::vector<lite_tetrahedron>&);
+
+    /*
+     * stub features
+     * this part has to be realized as separate application
+     */
+    double calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature);
 
 private:
+    double find_polygon_intersection_z(
+        const std::array<double, 3>& p1,
+        const std::array<double, 3>& p2,
+        const std::array<double, 3>& p3);
+
     double _x, _y;
     bool alternation_flag{false};
 
@@ -28,5 +47,11 @@ private:
      *
      * 28 last bits is id number of tetrahedron
      */
+
+    /*
+     * TODO:
+     * 1. concat to one vector
+     */
     std::vector<std::bitset<32>> _tetra_intersections;
+    std::vector<intersection_data> _intersections_delta;
 };

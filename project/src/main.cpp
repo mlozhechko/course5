@@ -12,7 +12,7 @@ constexpr double pi = 3.14159265358979323846;
 int main() {
     auto& sys = application_core::instance();
 
-    sys.set_resolution({1900, 1000});
+    sys.set_resolution({20, 10});
     sys.set_filename("test.vtk");
 
     std::vector<lite_tetrahedron> tetrahedron_vector{};
@@ -31,15 +31,17 @@ int main() {
     }
 
     size_t min_intersections(0), max_intersections(0);
-    min_intersections = max_intersections = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
+//    min_intersections = max_intersections = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
-        size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
-        min_intersections = std::min(res, min_intersections);
-        max_intersections = std::max(res, max_intersections);
-    }
+//    for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
+//        size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
+//        min_intersections = std::min(res, min_intersections);
+//        max_intersections = std::max(res, max_intersections);
+//    }
+
+    size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[606], 606);
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -49,6 +51,10 @@ int main() {
     std::cout << min_intersections << std::endl;
 
     std::cout << current_plane.count_all_intersections() << std::endl;
+
+    current_plane.trace_rays(tetrahedron_vector);
+
+    std::cout << tetrahedron_vector.at(606) << std::endl;
 
     return 0;
 }

@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 
+enum class tetra_value: size_t {alpha = 0, Q = 1};
+
 class lite_tetrahedron {
 public:
     explicit lite_tetrahedron(const std::array<std::array<double, 3>, 4>& points, double alpha, double q);
@@ -24,13 +26,14 @@ public:
      */
     std::array<double, 4> get_boundaries();
 
+    double access_value(tetra_value value) const;
+
 private:
     static void point_rotate_x(double alpha, std::array<double, 3>& point);
     friend std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt);
 
     std::array<std::array<double, 3>, 4> _points{};
-    double _q;
-    double _alpha;
+    std::array<double, 2> _tetra_values;
 };
 
 std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt);

@@ -19,6 +19,14 @@ public:
      */
     size_t find_intersections_with_tetrahedron(const lite_tetrahedron& tetra, size_t id);
 
+    /*
+     * trace_all rays
+     *
+     * TODO:
+     * 1. incapsulate tetra vector
+     */
+    void trace_rays(const std::vector<lite_tetrahedron>& tetra_vector);
+
 private:
     /*
      * all line equations is on X,Y plane

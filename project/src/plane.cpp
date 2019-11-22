@@ -139,3 +139,17 @@ size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 
 
     return counter;
 }
+
+void plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec) {
+//    for (size_t i = 0; i < _lines.size(); i++) {
+//        for (size_t j = 0; j < _lines[i].size(); j++) {
+//            _lines[i][j].calculate_intersections(tetra_vec);
+//
+//
+//            std::cout << "alpha" << _lines[i][j].calculate_ray_value(tetra_vec, tetra_value::alpha) << std::endl;
+//        }
+//    }
+
+    _lines[2][2].calculate_intersections(tetra_vec);
+    std::cout << "alpha" << _lines[2][2].calculate_ray_value(tetra_vec, tetra_value::alpha) << std::endl;
+}
