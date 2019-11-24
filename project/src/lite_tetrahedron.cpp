@@ -60,6 +60,16 @@ std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt)
     return os;
 }
 
+double lite_tetrahedron::delta_z() {
+    double max_z = _points[0][2];
+    double min_z = _points[0][2];
+    for (size_t i = 1; i < 4; i++) {
+        max_z = std::max(_points[i][2], max_z);
+        min_z = std::min(_points[i][2], min_z);
+    }
+    return max_z - min_z;
+}
+
 double lite_tetrahedron::access_value(tetra_value value) const {
     return _tetra_values[static_cast<size_t>(value)];
 }

@@ -25,8 +25,12 @@ public:
      * TODO:
      * 1. incapsulate tetra vector
      */
-    void trace_rays(const std::vector<lite_tetrahedron>& tetra_vector);
+    std::vector<std::vector<float>> trace_rays(const std::vector<lite_tetrahedron>& tetra_vec);
 
+    /*
+     * debug
+     */
+    void print_all_lines_with_intersection();
 private:
     /*
      * all line equations is on X,Y plane

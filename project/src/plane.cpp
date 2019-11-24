@@ -140,16 +140,26 @@ size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 
     return counter;
 }
 
-void plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec) {
-//    for (size_t i = 0; i < _lines.size(); i++) {
-//        for (size_t j = 0; j < _lines[i].size(); j++) {
-//            _lines[i][j].calculate_intersections(tetra_vec);
-//
-//
-//            std::cout << "alpha" << _lines[i][j].calculate_ray_value(tetra_vec, tetra_value::alpha) << std::endl;
-//        }
-//    }
+std::vector<std::vector<float>> plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec) {
+    std::vector<std::vector<float>> result{};
+    result.resize(_lines.size());
+    for (size_t i = 0; i < _lines.size(); i++) {
+        result[i].resize(_lines[i].size());
+        for (size_t j = 0; j < _lines[i].size(); j++) {
+            _lines[i][j].calculate_intersections(tetra_vec);
+           result[i][j] = _lines[i][j].calculate_ray_value(tetra_vec, tetra_value::alpha);
+        }
+    }
 
-    _lines[2][2].calculate_intersections(tetra_vec);
-    std::cout << "alpha" << _lines[2][2].calculate_ray_value(tetra_vec, tetra_value::alpha) << std::endl;
+    return result;
+}
+
+void plane::print_all_lines_with_intersection() {
+    for (auto& i: _lines) {
+        for (auto& j: i) {
+            if (j.number_of_intersections() > 0) {
+                std::cout << "" << j.x() << " " << j.y() << "" << std::endl;
+            }
+        }
+    }
 }

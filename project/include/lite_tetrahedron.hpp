@@ -28,6 +28,9 @@ public:
 
     double access_value(tetra_value value) const;
 
+    /* debug */
+    double delta_z();
+
 private:
     static void point_rotate_x(double alpha, std::array<double, 3>& point);
     friend std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt);
