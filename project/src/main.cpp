@@ -15,7 +15,7 @@ int main() {
     auto& sys = application_core::instance();
 
     size_t x_res = 2000;
-    size_t y_res = 1000;
+    size_t y_res = 2000;
 
     sys.set_resolution({x_res, y_res});
     sys.set_filename("test.vtk");
@@ -90,7 +90,7 @@ int main() {
 
     vtkSmartPointer<vtkXMLImageDataWriter> writer =
         vtkSmartPointer<vtkXMLImageDataWriter>::New();
-    writer->SetFileName("testfile.vti");
+    writer->SetFileName("result_85.vti");
     writer->SetInputData(imageData);
     writer->Write();
 
