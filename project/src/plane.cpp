@@ -140,14 +140,15 @@ size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 
     return counter;
 }
 
-std::vector<std::vector<float>> plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec) {
+std::vector<std::vector<float>>
+plane::direct_trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value) {
     std::vector<std::vector<float>> result{};
     result.resize(_lines.size());
     for (size_t i = 0; i < _lines.size(); i++) {
         result[i].resize(_lines[i].size());
         for (size_t j = 0; j < _lines[i].size(); j++) {
             _lines[i][j].calculate_intersections(tetra_vec);
-           result[i][j] = _lines[i][j].calculate_ray_value(tetra_vec, tetra_value::alpha);
+           result[i][j] = _lines[i][j].calculate_ray_value(tetra_vec, value);
         }
     }
 

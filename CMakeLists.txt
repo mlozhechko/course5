@@ -15,6 +15,6 @@ add_executable(
         project/src/lite_tetrahedron.cpp
         project/src/line.cpp
         project/src/plane.cpp
-        project/src/application_core.cpp)
+        project/src/app.cpp)
 
 target_link_libraries(course ${VTK_LIBRARIES})

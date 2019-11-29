@@ -1,98 +1,71 @@
 #include <iostream>
 #include <algorithm>
-#include <chrono>
 
 #include <lite_tetrahedron.hpp>
 #include <line.hpp>
 #include <plane.hpp>
-#include <application_core.hpp>
-#include <vtkImageData.h>
-#include <vtkXMLImageDataWriter.h>
+#include <app.hpp>
 
 constexpr double pi = 3.14159265358979323846;
 
 int main() {
-    auto& sys = application_core::instance();
+    std::string filename = "test.vtk";
+    std::string res_filename = "result61.vti";
+    size_t res_x = 200;
+    size_t res_y = 200;
+    double projection_angle = 61;
 
-    size_t x_res = 2000;
-    size_t y_res = 2000;
-
-    sys.set_resolution({x_res, y_res});
-    sys.set_filename("test.vtk");
+    std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
+    std::cout << "source file: " << filename << std::endl;
 
     std::vector<lite_tetrahedron> tetrahedron_vector{};
     plane current_plane{};
-    std::array<double, 4> global_boundaries{};
+    std::array<double, 4> domain_boundaries{};
     try {
-        tetrahedron_vector = sys.get_tetrahedron_vector();
-        application_core::rotate_tetrahedron_vector(tetrahedron_vector, pi * 85. / 180.);
-        global_boundaries = application_core::get_global_boundaries(tetrahedron_vector);
-        application_core::print_boundaries(global_boundaries);
-
-        current_plane = sys.init_plane_grid(global_boundaries);
+        tetrahedron_vector = app::get_tetrahedron_vector(filename);
+        app::rotate_tetrahedron_vector(tetrahedron_vector, pi * projection_angle / 180.);
+        domain_boundaries = app::get_domain_boundaries(tetrahedron_vector);
+        current_plane = app::init_plane_grid(res_x, res_y, domain_boundaries);
     } catch (const std::exception& e) {
-        std::cout << "initialization error" << std::endl;
-        std::cerr << e.what() << std::endl;
+        std::cerr
+            << "initialization error" << std::endl
+            << e.what() << std::endl;
+
+        return -1;
     }
+    std::cout << "[1] grid initialized, source data produced" << std::endl;
 
-    size_t min_intersections(0), max_intersections(0);
-    min_intersections = max_intersections = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
-        size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
-        min_intersections = std::min(res, min_intersections);
-        max_intersections = std::max(res, max_intersections);
+    try {
+        app::find_tetrahedron_vector_intersections_with_lines(tetrahedron_vector, current_plane);
+    } catch (const std::exception& e) {
+        std::cerr
+            << "iteration through tetrahedron array failure" << std::endl
+            << e.what() << std::endl;
+        return -2;
     }
+    std::cout << "[2] rays and tetrahedrons matching completed" << std::endl;
 
-//    size_t res = current_plane.find_intersections_with_tetrahedron(tetrahedron_vector[610], 610);
-
-//    current_plane.print_all_lines_with_intersection();
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "find all intersections complete in: " << timer << " ms" << std::endl;
-    std::cout << max_intersections << std::endl;
-    std::cout << min_intersections << std::endl;
-
-    t1 = std::chrono::high_resolution_clock::now();
-    std::cout << current_plane.count_all_intersections() << std::endl;
-
-    std::vector<std::vector<float>> result_alpha = current_plane.trace_rays(tetrahedron_vector);
-
-    t2 = std::chrono::high_resolution_clock::now();
-    timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-    std::cout << "trace all rays complete in: " << timer << " ms" << std::endl;
-
-    vtkSmartPointer<vtkImageData> imageData =
-        vtkSmartPointer<vtkImageData>::New();
-    imageData->SetDimensions(x_res, y_res, 1);
-    imageData->AllocateScalars(VTK_DOUBLE, 2);
-
-    int* dims = imageData->GetDimensions();
-
-    // Fill every entry of the image data with "2.0"
-    for (int z = 0; z < dims[2]; z++)
-    {
-        for (int y = 0; y < dims[1]; y++)
-        {
-            for (int x = 0; x < dims[0]; x++)
-            {
-                double* pixel = static_cast<double*>(imageData->GetScalarPointer(x,y,z));
-                pixel[0] = result_alpha[x][y];
-                pixel[1] = 1.0;
-            }
-        }
+    std::vector<std::vector<float>> result_alpha;
+    try {
+        result_alpha = app::direct_trace_rays(current_plane, tetrahedron_vector, tetra_value::alpha);
+    } catch (const std::exception& e) {
+        std::cerr
+            << "ray tracing failure" << std::endl
+            << e.what() << std::endl;
+        return -3;
     }
+    std::cout << "[3] ray tracing complete" << std::endl;
 
-    vtkSmartPointer<vtkXMLImageDataWriter> writer =
-        vtkSmartPointer<vtkXMLImageDataWriter>::New();
-    writer->SetFileName("result_85.vti");
-    writer->SetInputData(imageData);
-    writer->Write();
+    try {
+        app::produce_result(result_alpha, res_filename, res_x, res_y);
+    } catch (const std::exception& e) {
+        std::cerr
+            << "producing result failure" << std::endl
+            << e.what() << std::endl;
+        return -4;
+    }
+    std::cout << "result file: " << res_filename << std::endl;
+    std::cout << "[4] producing result representation completed" << std::endl;
 
     return 0;
 }

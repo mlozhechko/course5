@@ -25,7 +25,8 @@ public:
      * TODO:
      * 1. incapsulate tetra vector
      */
-    std::vector<std::vector<float>> trace_rays(const std::vector<lite_tetrahedron>& tetra_vec);
+    std::vector<std::vector<float>>
+    direct_trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value);
 
     /*
      * debug
