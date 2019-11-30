@@ -27,13 +27,13 @@ namespace app {
         const std::vector<lite_tetrahedron>& tetrahedron_vector,
         plane& task_plane);
 
-    std::vector<std::vector<float>> direct_trace_rays(
-        plane& current_plane,
-        std::vector<lite_tetrahedron>& tetrahedron_vector,
-        tetra_value value);
+    std::pair<float_matrix, float_matrix>
+    trace_rays(plane& current_plane, std::vector<lite_tetrahedron>& tetrahedron_vector, tetra_value value_alpha,
+               tetra_value value_q);
 
     void
-    produce_result(std::vector<std::vector<float>>& data_x, const std::string& result_filename, size_t res_x, size_t res_y);
+    produce_result(std::pair<float_matrix, float_matrix>& data, size_t res_x, size_t res_y,
+                   const std::string& result_filename);
 }
 
 

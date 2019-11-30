@@ -10,10 +10,10 @@ constexpr double pi = 3.14159265358979323846;
 
 int main() {
     std::string filename = "test.vtk";
-    std::string res_filename = "result61.vti";
-    size_t res_x = 200;
-    size_t res_y = 200;
-    double projection_angle = 61;
+    std::string res_filename = "result85.vti";
+    size_t res_x = 1000;
+    size_t res_y = 1000;
+    double projection_angle = 85;
 
     std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
     std::cout << "source file: " << filename << std::endl;
@@ -45,9 +45,9 @@ int main() {
     }
     std::cout << "[2] rays and tetrahedrons matching completed" << std::endl;
 
-    std::vector<std::vector<float>> result_alpha;
+    std::pair<float_matrix, float_matrix> result;
     try {
-        result_alpha = app::direct_trace_rays(current_plane, tetrahedron_vector, tetra_value::alpha);
+        result = app::trace_rays(current_plane, tetrahedron_vector, tetra_value::alpha, tetra_value::Q);
     } catch (const std::exception& e) {
         std::cerr
             << "ray tracing failure" << std::endl
@@ -57,7 +57,7 @@ int main() {
     std::cout << "[3] ray tracing complete" << std::endl;
 
     try {
-        app::produce_result(result_alpha, res_filename, res_x, res_y);
+        app::produce_result(result, res_x, res_y, res_filename);
     } catch (const std::exception& e) {
         std::cerr
             << "producing result failure" << std::endl

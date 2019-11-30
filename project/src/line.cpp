@@ -135,8 +135,8 @@ double line::find_polygon_intersection_z(const std::array<double, 3>& p1, const 
     return z_value;
 }
 
-double line::calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature) {
-    double sum{};
+double line::direct_calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature) {
+    double sum = 0;
 
     size_t length = _tetra_intersections.size();
     for (size_t i = 0; i < length; i++) {
@@ -147,4 +147,28 @@ double line::calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vect
     }
 
     return sum;
+}
+
+double line::integrate_ray_value_by_i(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value alpha_signature,
+                                      tetra_value q_signature) {
+    double I = 0;
+
+    size_t length = static_cast<ssize_t>(_tetra_intersections.size());
+    for (ssize_t i = length - 1; i >= 0; i--) {
+        size_t tetra_id = _intersections_delta.at(i).tetra_id;
+        double delta = _intersections_delta.at(i).delta_z;
+
+        double Q = tetra_vector.at(tetra_id).access_value(q_signature);
+        double alpha = tetra_vector.at(tetra_id).access_value(alpha_signature);
+
+        double C = Q - alpha * I;
+        if (alpha < std::numeric_limits<double>::epsilon()) {
+//            std::cout << "warning";
+        } else {
+            I = (Q - C * exp(-alpha * delta)) / alpha;
+        }
+//        std::cout << I << " ";
+    }
+//    std::cout << std::endl;
+    return I;
 }

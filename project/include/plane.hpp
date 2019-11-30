@@ -7,6 +7,8 @@
 #include <line.hpp>
 #include <lite_tetrahedron.hpp>
 
+using float_matrix = std::vector<std::vector<float>>;
+
 class plane {
 public:
     plane() = default;
@@ -25,8 +27,9 @@ public:
      * TODO:
      * 1. incapsulate tetra vector
      */
-    std::vector<std::vector<float>>
-    direct_trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value);
+    std::pair<float_matrix, float_matrix>
+    trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, tetra_value value_alpha,
+               tetra_value value_Q);
 
     /*
      * debug

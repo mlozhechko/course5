@@ -4,6 +4,7 @@
 #include <bitset>
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 #include <lite_tetrahedron.hpp>
 
@@ -25,10 +26,16 @@ public:
     void calculate_intersections(const std::vector<lite_tetrahedron>&);
 
     /*
-     * stub features
-     * this part has to be realized as separate application
+     * sum delta_z within tetrahedron * alpha for all tetrahedrons which intersects the line
      */
-    double calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature);
+    double direct_calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature);
+
+    /*
+     * solve I' + alpha * I = Q equation
+     */
+    double integrate_ray_value_by_i(const std::vector<lite_tetrahedron>& tetra_vector,
+                                    tetra_value alpha_signature,
+                                    tetra_value q_signature);
 
 private:
     double find_polygon_intersection_z(

@@ -104,27 +104,29 @@ void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<lit
         << std::endl;
 }
 
-std::vector<std::vector<float>>
-app::direct_trace_rays(plane& current_plane, std::vector<lite_tetrahedron>& tetrahedron_vector, tetra_value value) {
+std::pair<float_matrix, float_matrix>
+app::trace_rays(plane& current_plane, std::vector<lite_tetrahedron>& tetrahedron_vector, tetra_value value_alpha,
+                tetra_value value_q) {
     auto t1 = std::chrono::high_resolution_clock::now();
 //    std::cout << current_plane.count_all_intersections() << std::endl;
 
-    std::vector<std::vector<float>> result = current_plane.direct_trace_rays(tetrahedron_vector, value);
+    auto res = current_plane.trace_rays(tetrahedron_vector, value_alpha, value_q);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
     std::cout << "trace all rays complete in: " << timer << " ms" << std::endl;
 
-    return result;
+    return res;
 }
 
 void
-app::produce_result(std::vector<std::vector<float>>& data_x, const std::string& result_filename, size_t res_x, size_t res_y) {
+app::produce_result(std::pair<float_matrix, float_matrix>& data, size_t res_x, size_t res_y,
+                    const std::string& result_filename) {
     vtkSmartPointer<vtkImageData> imageData =
         vtkSmartPointer<vtkImageData>::New();
     imageData->SetDimensions(res_x, res_y, 1);
-    imageData->AllocateScalars(VTK_DOUBLE, 1);
+    imageData->AllocateScalars(VTK_DOUBLE, 2);
 
     int* dims = imageData->GetDimensions();
 
@@ -133,8 +135,8 @@ app::produce_result(std::vector<std::vector<float>>& data_x, const std::string& 
         for (int x = 0; x < dims[0]; x++)
         {
             auto* pixel = static_cast<double*>(imageData->GetScalarPointer(x, y,0));
-            pixel[0] = data_x[x][y];
-//            pixel[1] = 1.0;
+            pixel[0] = data.first[x][y];
+            pixel[1] = data.second[x][y];
         }
     }
 

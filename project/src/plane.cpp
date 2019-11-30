@@ -140,19 +140,25 @@ size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 
     return counter;
 }
 
-std::vector<std::vector<float>>
-plane::direct_trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value) {
-    std::vector<std::vector<float>> result{};
-    result.resize(_lines.size());
+std::pair<float_matrix, float_matrix>
+plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value_alpha,
+                  const tetra_value value_Q) {
+    std::vector<std::vector<float>> result_x{};
+    std::vector<std::vector<float>> result_y{};
+    result_x.resize(_lines.size());
+    result_y.resize(_lines.size());
     for (size_t i = 0; i < _lines.size(); i++) {
-        result[i].resize(_lines[i].size());
+        result_x[i].resize(_lines[i].size());
+        result_y[i].resize(_lines[i].size());
         for (size_t j = 0; j < _lines[i].size(); j++) {
             _lines[i][j].calculate_intersections(tetra_vec);
-           result[i][j] = _lines[i][j].calculate_ray_value(tetra_vec, value);
+            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
+            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+
         }
     }
 
-    return result;
+    return {result_x, result_y};
 }
 
 void plane::print_all_lines_with_intersection() {
