@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include <line.hpp>
-#include <lite_tetrahedron.hpp>
+#include <tetra.hpp>
 
 using float_matrix = std::vector<std::vector<float>>;
 
@@ -19,7 +19,7 @@ public:
     /*
      * return amount of lines to intersect polygons
      */
-    size_t find_intersections_with_tetrahedron(const lite_tetrahedron& tetra, size_t id);
+    size_t find_intersections_with_tetrahedron(const tetra& tetra, size_t id);
 
     /*
      * trace_all rays
@@ -28,7 +28,7 @@ public:
      * 1. incapsulate tetra vector
      */
     std::pair<float_matrix, float_matrix>
-    trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, tetra_value value_alpha,
+    trace_rays(const std::vector<tetra>& tetra_vec, tetra_value value_alpha,
                tetra_value value_Q);
 
     /*
@@ -39,8 +39,8 @@ private:
     /*
      * all line equations is on X,Y plane
      */
-    double line_common_eq(const double *p1, const double *p2, const double *pos);
-    double line_rev_function_eq(const double *p1, const double *p2, double y);
+    static double line_common_eq(const double *p1, const double *p2, const double *pos);
+    static double line_rev_function_eq(const double *p1, const double *p2, double y);
 
     size_t find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id);
 

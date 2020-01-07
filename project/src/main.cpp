@@ -1,14 +1,16 @@
 #include <iostream>
 #include <algorithm>
 
-#include <lite_tetrahedron.hpp>
+#include <tetra.hpp>
 #include <line.hpp>
 #include <plane.hpp>
 #include <app.hpp>
 
-constexpr double pi = 3.14159265358979323846;
+const double pi = 3.14159265358979323846;
+const size_t threads_amount = 2;
 
 int main() {
+    std::cout << "[1] ";
     std::string filename = "test.vtk";
     std::string res_filename = "result85.vti";
     size_t res_x = 1000;
@@ -18,7 +20,7 @@ int main() {
     std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
     std::cout << "source file: " << filename << std::endl;
 
-    std::vector<lite_tetrahedron> tetrahedron_vector{};
+    std::vector<tetra> tetrahedron_vector{};
     plane current_plane{};
     std::array<double, 4> domain_boundaries{};
     try {
@@ -33,8 +35,9 @@ int main() {
 
         return -1;
     }
-    std::cout << "[1] grid initialized, source data produced" << std::endl;
+    std::cout << "grid initialized, source data produced" << std::endl;
 
+    std::cout << "[2] ";
     try {
         app::find_tetrahedron_vector_intersections_with_lines(tetrahedron_vector, current_plane);
     } catch (const std::exception& e) {
@@ -43,7 +46,8 @@ int main() {
             << e.what() << std::endl;
         return -2;
     }
-    std::cout << "[2] rays and tetrahedrons matching completed" << std::endl;
+    std::cout << "rays and tetrahedrons matching completed" << std::endl;
+    std::cout << "[3] ";
 
     std::pair<float_matrix, float_matrix> result;
     try {
@@ -54,8 +58,9 @@ int main() {
             << e.what() << std::endl;
         return -3;
     }
-    std::cout << "[3] ray tracing complete" << std::endl;
+    std::cout << "ray tracing complete" << std::endl;
 
+    std::cout << "[4] ";
     try {
         app::produce_result(result, res_x, res_y, res_filename);
     } catch (const std::exception& e) {
@@ -65,7 +70,7 @@ int main() {
         return -4;
     }
     std::cout << "result file: " << res_filename << std::endl;
-    std::cout << "[4] producing result representation completed" << std::endl;
+    std::cout << "producing result representation completed" << std::endl;
 
     return 0;
 }

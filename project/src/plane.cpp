@@ -32,7 +32,7 @@ size_t plane::count_all_intersections() {
     return sum;
 }
 
-size_t plane::find_intersections_with_tetrahedron(const lite_tetrahedron& tetra, size_t id) {
+size_t plane::find_intersections_with_tetrahedron(const tetra& tetra, size_t id) {
     /*
      * 0001 0, 1, 2 points
      * 0010 0, 1, 3 points
@@ -126,8 +126,8 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
             }
         }
 
-        size_t x_max_index = std::floor((x_max - _global_boundaries[1]) / _step_x);
-        size_t x_min_index = std::ceil((x_min - _global_boundaries[1]) / _step_x);
+        const size_t x_max_index = std::floor((x_max - _global_boundaries[1]) / _step_x);
+        const size_t x_min_index = std::ceil((x_min - _global_boundaries[1]) / _step_x);
 
         for (size_t i = x_min_index; i <= x_max_index; i++) {
             _lines[i][y_index_it].add_tetra_intersection(id, polygon_id);
@@ -141,7 +141,7 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
 }
 
 std::pair<float_matrix, float_matrix>
-plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_value value_alpha,
+plane::trace_rays(const std::vector<tetra>& tetra_vec, const tetra_value value_alpha,
                   const tetra_value value_Q) {
     std::vector<std::vector<float>> result_x{};
     std::vector<std::vector<float>> result_y{};

@@ -9,9 +9,9 @@ enum class tetra_value : size_t {
     alpha = 0, Q = 1
 };
 
-class lite_tetrahedron {
+class tetra {
 public:
-    explicit lite_tetrahedron(const std::array<std::array<double, 3>, 4>& points, double alpha, double q);
+    explicit tetra(const std::array<std::array<double, 3>, 4>& points, double alpha, double q);
 
     const std::array<double, 3>& operator[](size_t i) const {
         return _points[i];
@@ -35,10 +35,10 @@ public:
 
 private:
     static void point_rotate_x(double alpha, std::array<double, 3>& point);
-    friend std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt);
+    friend std::ostream& operator<<(std::ostream& os, const tetra& lt);
 
     std::array<std::array<double, 3>, 4> _points{};
     std::array<double, 2> _tetra_values;
 };
 
-std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt);
+std::ostream& operator<<(std::ostream& os, const tetra& lt);

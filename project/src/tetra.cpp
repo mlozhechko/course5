@@ -1,18 +1,18 @@
-#include <lite_tetrahedron.hpp>
+#include <tetra.hpp>
 
-lite_tetrahedron::lite_tetrahedron(const std::array<std::array<double, 3>, 4>& points, double alpha, double q)
+tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double alpha, double q)
     : _points(points) {
     _tetra_values[static_cast<size_t>(tetra_value::alpha)] = alpha;
     _tetra_values[static_cast<size_t>(tetra_value::Q)] = q;
 }
 
-void lite_tetrahedron::rotate_x(double angle) {
+void tetra::rotate_x(double angle) {
     for (auto& i: _points) {
         point_rotate_x(angle, i);
     }
 }
 
-std::array<double, 4> lite_tetrahedron::get_boundaries() {
+std::array<double, 4> tetra::get_boundaries() {
     /*
      * TODO:
      * 1. remove(!)
@@ -42,13 +42,13 @@ std::array<double, 4> lite_tetrahedron::get_boundaries() {
     return res;
 }
 
-void lite_tetrahedron::point_rotate_x(double alpha, std::array<double, 3>& point) {
+void tetra::point_rotate_x(double alpha, std::array<double, 3>& point) {
     double tmp_point1 = point[1];
     point[1] = point[1] * cos(alpha) - point[2] * sin(alpha);
     point[2] = tmp_point1 * sin(alpha) + point[2] * cos(alpha);
 }
 
-std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt) {
+std::ostream& operator<<(std::ostream& os, const tetra& lt) {
     double alpha = lt.access_value(tetra_value::alpha);
     double q = lt.access_value(tetra_value::Q);
 
@@ -59,7 +59,7 @@ std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt) {
     return os;
 }
 
-double lite_tetrahedron::delta_z() {
+double tetra::delta_z() {
     double max_z = _points[0][2];
     double min_z = _points[0][2];
     for (size_t i = 1; i < 4; i++) {
@@ -69,6 +69,6 @@ double lite_tetrahedron::delta_z() {
     return max_z - min_z;
 }
 
-double lite_tetrahedron::access_value(tetra_value value) const {
+double tetra::access_value(tetra_value value) const {
     return _tetra_values[static_cast<size_t>(value)];
 }

@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include <plane.hpp>
-#include <lite_tetrahedron.hpp>
+#include <tetra.hpp>
 
 #include <vtkUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
@@ -17,18 +17,18 @@
 
 namespace app {
     vtkSmartPointer<vtkUnstructuredGrid> init_vtk_grid(const std::string& filename);
-    std::vector<lite_tetrahedron> get_tetrahedron_vector(const std::string& filename);
-    void rotate_tetrahedron_vector(std::vector<lite_tetrahedron>&, double angle);
-    std::array<double, 4> get_domain_boundaries(std::vector<lite_tetrahedron>&);
+    std::vector<tetra> get_tetrahedron_vector(const std::string& filename);
+    void rotate_tetrahedron_vector(std::vector<tetra>&, double angle);
+    std::array<double, 4> get_domain_boundaries(std::vector<tetra>&);
     void print_boundaries(const std::array<double, 4>&);
     plane init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& global_boundaries);
 
     void find_tetrahedron_vector_intersections_with_lines(
-        const std::vector<lite_tetrahedron>& tetrahedron_vector,
+        const std::vector<tetra>& tetrahedron_vector,
         plane& task_plane);
 
     std::pair<float_matrix, float_matrix>
-    trace_rays(plane& current_plane, std::vector<lite_tetrahedron>& tetrahedron_vector, tetra_value value_alpha,
+    trace_rays(plane& current_plane, std::vector<tetra>& tetrahedron_vector, tetra_value value_alpha,
                tetra_value value_q);
 
     void

@@ -5,9 +5,52 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
-#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
 
-#include <lite_tetrahedron.hpp>
+#include <tetra.hpp>
+#include <unordered_map>
+#include <mutex>
+
+/*
+ * temporary solution
+ *
+ * add tetra intersection custom vector thread safe container
+ */
+
+const size_t AMOUNT_OF_THREADS = 2;
+
+class cont_tetra_intersection {
+public:
+    explicit cont_tetra_intersection(std::vector<std::bitset<32>>& tetra_intersections)
+        : _tetra_intersections(tetra_intersections) {
+        flags = {};
+        buffer = {};
+    };
+
+    void add_intersection(size_t thread_id, std::bitset<32> value) {
+        buffer[thread_id] |= value;
+        if (!flags[thread_id]) {
+            flags[thread_id] = true;
+        } else {
+            add_to_main_vector(buffer[thread_id]);
+            flags[thread_id] = false;
+            buffer[thread_id] = 0;
+        }
+    }
+
+private:
+
+    void add_to_main_vector(std::bitset<32> value) {
+        std::lock_guard<std::mutex> lock(add_to_main_vector_mutex);
+//        _tetra_intersections.push_back(value);
+    }
+
+    std::mutex add_to_main_vector_mutex;
+    std::array<bool, AMOUNT_OF_THREADS> flags;
+    std::array<std::bitset<32>, AMOUNT_OF_THREADS> buffer;
+
+    std::vector<std::bitset<32>>& _tetra_intersections;
+};
 
 struct intersection_data {
     double delta_z;
@@ -24,17 +67,17 @@ public:
     void add_tetra_intersection(size_t id, size_t polygon_id);
     size_t number_of_intersections();
 
-    void calculate_intersections(const std::vector<lite_tetrahedron>&);
+    void calculate_intersections(const std::vector<tetra>&);
 
     /*
      * sum delta_z within tetrahedron * alpha for all tetrahedrons which intersects the line
      */
-    double direct_calculate_ray_value(const std::vector<lite_tetrahedron>& tetra_vector, tetra_value value_signature);
+    double direct_calculate_ray_value(const std::vector<tetra>& tetra_vector, tetra_value value_signature);
 
     /*
      * solve I' + alpha * I = Q equation
      */
-    double integrate_ray_value_by_i(const std::vector<lite_tetrahedron>& tetra_vector,
+    double integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
                                     tetra_value alpha_signature,
                                     tetra_value q_signature);
 
@@ -60,6 +103,9 @@ private:
      * TODO:
      * 1. concat to one vector
      */
+
     std::vector<std::bitset<32>> _tetra_intersections;
     std::vector<intersection_data> _intersections_delta;
+
+    cont_tetra_intersection _cont_tetra_intersections{_tetra_intersections};
 };
