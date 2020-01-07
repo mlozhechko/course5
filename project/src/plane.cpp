@@ -1,7 +1,7 @@
 #include <plane.hpp>
 
 plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries)
-: _global_boundaries(global_boundaries) {
+    : _global_boundaries(global_boundaries) {
     double delta_x(global_boundaries[0] - global_boundaries[1]);
     double delta_y(global_boundaries[2] - global_boundaries[3]);
 
@@ -23,8 +23,8 @@ plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_bou
 
 size_t plane::count_all_intersections() {
     size_t sum = 0;
-    for (auto &i: _lines) {
-        for (auto &j: i) {
+    for (auto& i: _lines) {
+        for (auto& j: i) {
             sum += j.number_of_intersections();
         }
     }
@@ -41,10 +41,10 @@ size_t plane::find_intersections_with_tetrahedron(const lite_tetrahedron& tetra,
      */
 
     size_t sum(0);
-    sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[2]}, id, 0);
-    sum += find_intersections_with_polygon({tetra[0], tetra[1], tetra[3]}, id, 1);
-    sum += find_intersections_with_polygon({tetra[0], tetra[2], tetra[3]}, id, 2);
-    sum += find_intersections_with_polygon({tetra[1], tetra[2], tetra[3]}, id, 3);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[2].data()}, id, 0);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[3].data()}, id, 1);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[2].data(), tetra[3].data()}, id, 2);
+    sum += find_intersections_with_polygon({tetra[1].data(), tetra[2].data(), tetra[3].data()}, id, 3);
 
     if (sum % 2 == 1) {
         throw std::runtime_error("critical error. odd number of intersections");
@@ -53,18 +53,18 @@ size_t plane::find_intersections_with_tetrahedron(const lite_tetrahedron& tetra,
     return sum / 2;
 }
 
-inline double plane::line_common_eq(std::array<double, 3> p1, std::array<double, 3> p2, std::array<double, 3> pos) {
+double plane::line_common_eq(const double *p1, const double *p2, const double *pos) {
     return (p2[1] - p1[1]) * pos[0] + (p1[0] - p2[0]) * pos[1] + (p2[0] * p1[1] - p1[0] * p2[1]);
 }
 
-inline double plane::line_rev_function_eq(std::array<double, 3> p1, std::array<double, 3> p2, double y) {
+double plane::line_rev_function_eq(const double *p1, const double *p2, double y) {
     return (p1[0] - p2[0]) * (y - p1[1]) / (p1[1] - p2[1]) + p1[0];
 }
 
-size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 3> points, size_t id, size_t polygon_id) {
+size_t plane::find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id) {
     size_t counter(0);
 
-    std::sort(points.begin(), points.end(), [](auto a, auto b){
+    std::sort(points.begin(), points.end(), [](auto& a, auto& b) {
         return a[1] > b[1];
     });
 
@@ -99,8 +99,8 @@ size_t plane::find_intersections_with_polygon(std::array<std::array<double, 3>, 
     double y_max = points[0][1];
     double y_min = points[2][1];
 
-    size_t y_max_index = std::floor((y_max - _global_boundaries[3]) / _step_y);
-    size_t y_min_index = std::ceil((y_min - _global_boundaries[3]) / _step_y);
+    const size_t y_max_index = std::floor((y_max - _global_boundaries[3]) / _step_y);
+    const size_t y_min_index = std::ceil((y_min - _global_boundaries[3]) / _step_y);
 
     size_t y_index_it = y_min_index;
     double y_it = _lines[0][y_index_it].y();
@@ -147,10 +147,17 @@ plane::trace_rays(const std::vector<lite_tetrahedron>& tetra_vec, const tetra_va
     std::vector<std::vector<float>> result_y{};
     result_x.resize(_lines.size());
     result_y.resize(_lines.size());
-    for (size_t i = 0; i < _lines.size(); i++) {
-        result_x[i].resize(_lines[i].size());
-        result_y[i].resize(_lines[i].size());
-        for (size_t j = 0; j < _lines[i].size(); j++) {
+
+    const size_t lines_size_1d = _lines.size();
+    if (lines_size_1d == 0) {
+        throw std::runtime_error("critical error. empty plane");
+    }
+    const size_t lines_size_2d = _lines[0].size();
+
+    for (size_t i = 0; i < lines_size_1d; i++) {
+        result_x[i].resize(lines_size_2d);
+        result_y[i].resize(lines_size_2d);
+        for (size_t j = 0; j < lines_size_2d; j++) {
             _lines[i][j].calculate_intersections(tetra_vec);
             result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
             result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);

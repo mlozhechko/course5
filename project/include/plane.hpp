@@ -39,12 +39,10 @@ private:
     /*
      * all line equations is on X,Y plane
      */
+    double line_common_eq(const double *p1, const double *p2, const double *pos);
+    double line_rev_function_eq(const double *p1, const double *p2, double y);
 
-    static inline double line_common_eq(std::array<double, 3> p1, std::array<double, 3> p2, std::array<double, 3> pos);
-
-    static inline double line_rev_function_eq(std::array<double, 3> p1, std::array<double, 3> p2, double y);
-
-    size_t find_intersections_with_polygon(std::array<std::array<double, 3>, 3> points, size_t id, size_t polygon_id);
+    size_t find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id);
 
     /*
      * [] sequence is [x][y]

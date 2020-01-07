@@ -7,6 +7,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2")
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
+find_package(Boost 1.61.0 COMPONENTS container REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+
 include_directories("./project/src" "./project/include")
 
 add_executable(
@@ -18,3 +22,4 @@ add_executable(
         project/src/app.cpp)
 
 target_link_libraries(course ${VTK_LIBRARIES})
+target_link_libraries(course ${Boost_LIBRARIES})

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <boost/container/flat_set.hpp>
 
 #include <lite_tetrahedron.hpp>
 

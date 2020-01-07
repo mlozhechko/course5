@@ -44,7 +44,7 @@ std::vector<lite_tetrahedron> app::get_tetrahedron_vector(const std::string& fil
     return tetrahedron_vector;
 }
 
-void app::rotate_tetrahedron_vector(std::vector <lite_tetrahedron>& tetrahedron_vector, double angle) {
+void app::rotate_tetrahedron_vector(std::vector<lite_tetrahedron>& tetrahedron_vector, double angle) {
     for (auto& i: tetrahedron_vector) {
         i.rotate_x(angle);
     }
@@ -87,7 +87,8 @@ void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<lit
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = 1; i < tetrahedron_vector.size(); i++) {
+    size_t tetrahedron_vector_size = tetrahedron_vector.size();
+    for (size_t i = 1; i < tetrahedron_vector_size; i++) {
         size_t res = task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
         min_intersections = std::min(res, min_intersections);
         max_intersections = std::max(res, max_intersections);
@@ -98,9 +99,9 @@ void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<lit
     auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout
         << "find all intersections complete in: " << timer << " ms"
-//        << std::endl
-//        << "maximum and minimum amound of_intersections with tetrahedron "
-//        << max_intersections << " " << min_intersections
+        //        << std::endl
+        //        << "maximum and minimum amound of_intersections with tetrahedron "
+        //        << max_intersections << " " << min_intersections
         << std::endl;
 }
 
@@ -128,13 +129,11 @@ app::produce_result(std::pair<float_matrix, float_matrix>& data, size_t res_x, s
     imageData->SetDimensions(res_x, res_y, 1);
     imageData->AllocateScalars(VTK_DOUBLE, 2);
 
-    int* dims = imageData->GetDimensions();
+    int *dims = imageData->GetDimensions();
 
-    for (int y = 0; y < dims[1]; y++)
-    {
-        for (int x = 0; x < dims[0]; x++)
-        {
-            auto* pixel = static_cast<double*>(imageData->GetScalarPointer(x, y,0));
+    for (int y = 0; y < dims[1]; y++) {
+        for (int x = 0; x < dims[0]; x++) {
+            auto *pixel = static_cast<double *>(imageData->GetScalarPointer(x, y, 0));
             pixel[0] = data.first[x][y];
             pixel[1] = data.second[x][y];
         }

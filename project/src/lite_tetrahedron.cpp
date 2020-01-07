@@ -1,7 +1,7 @@
 #include <lite_tetrahedron.hpp>
 
 lite_tetrahedron::lite_tetrahedron(const std::array<std::array<double, 3>, 4>& points, double alpha, double q)
-: _points(points) {
+    : _points(points) {
     _tetra_values[static_cast<size_t>(tetra_value::alpha)] = alpha;
     _tetra_values[static_cast<size_t>(tetra_value::Q)] = q;
 }
@@ -29,7 +29,7 @@ std::array<double, 4> lite_tetrahedron::get_boundaries() {
         auto flag = static_cast<double>(res[0] < _points[i][0]);
         res[0] = flag * _points[i][0] + (1 - flag) * res[0];
 
-        flag = static_cast<double>(res[1] >_points[i][0]);
+        flag = static_cast<double>(res[1] > _points[i][0]);
         res[1] = flag * _points[i][0] + (1 - flag) * res[1];
 
         flag = static_cast<double>(res[2] < _points[i][1]);
@@ -48,8 +48,7 @@ void lite_tetrahedron::point_rotate_x(double alpha, std::array<double, 3>& point
     point[2] = tmp_point1 * sin(alpha) + point[2] * cos(alpha);
 }
 
-std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt)
-{
+std::ostream& operator<<(std::ostream& os, const lite_tetrahedron& lt) {
     double alpha = lt.access_value(tetra_value::alpha);
     double q = lt.access_value(tetra_value::Q);
 

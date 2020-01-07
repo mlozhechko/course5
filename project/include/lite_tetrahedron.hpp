@@ -5,7 +5,9 @@
 #include <string>
 #include <iostream>
 
-enum class tetra_value: size_t {alpha = 0, Q = 1};
+enum class tetra_value : size_t {
+    alpha = 0, Q = 1
+};
 
 class lite_tetrahedron {
 public:
