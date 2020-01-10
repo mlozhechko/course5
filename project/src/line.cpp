@@ -2,6 +2,10 @@
 
 line::line(double x, double y) : _x(x), _y(y) {
     _tetra_intersections.reserve(50);
+//
+//    for (size_t i = 0; i < AMOUNT_OF_THREADS; i++) {
+//        _threads_buffers[i].reserve(10);
+//    }
 }
 
 double line::x() {
@@ -14,6 +18,14 @@ double line::y() {
 
 const int DELIMITER_POS = 28;
 
+/*
+ * 0001 0, 1, 2 points
+ * 0010 0, 1, 3 points
+ * 0100 0, 2, 3 points
+ * 1000 1, 2, 3 points
+ */
+static std::bitset<32> mask{0x0FFFFFFF};
+
 void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id) {
 //    std::cout << _x << " " << _y << std::endl;
 //    std::cout << internal_thread_id << " " << id << " " << buffer_data[0] << std::endl;
@@ -21,8 +33,19 @@ void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thr
     buffer_data[internal_thread_id].set(DELIMITER_POS + polygon_id);
     buffer_data[internal_thread_id] |= id;
 
+    /*
+     * check for data races and other bad things
+     */
+    if (!buffer_flags[internal_thread_id]) {
+        if ( (buffer_data[internal_thread_id] & mask).to_ulong() != id) {
+            std::cout << internal_thread_id << std::endl;
+            std::cout << (buffer_data[internal_thread_id] & mask).to_ulong() << " " << id << std::endl;
+            throw std::runtime_error("tetrahedron intersection fatal data error");
+        }
+    }
+
     if (buffer_flags[internal_thread_id]) {
-        ts_tetra_intersections_pushback(buffer_data[internal_thread_id]);
+        ts_tetra_intersections_pushback(buffer_data[internal_thread_id], internal_thread_id);
         buffer_data[internal_thread_id] = 0;
     }
 
@@ -45,13 +68,7 @@ size_t line::number_of_intersections() {
     return _tetra_intersections.size();
 }
 
-/*
- * 0001 0, 1, 2 points
- * 0010 0, 1, 3 points
- * 0100 0, 2, 3 points
- * 1000 1, 2, 3 points
- */
-static std::bitset<32> mask{0x0FFFFFFF};
+
 
 struct set_intersection_data {
     double key_z;
@@ -66,11 +83,15 @@ struct set_intersection_data_cmp {
 
 void line::calculate_intersections(const std::vector<tetra>& tetra_vector) {
 //    boost::container::flat_set<set_intersection_data, set_intersection_data_cmp> values;
+//    std::cout << "!" << tetra_vector.size() << std::endl;
+
     std::vector<set_intersection_data> values;
     values.reserve(200);
 
     for (const auto& it: _tetra_intersections) {
         size_t tetra_id = (it & mask).to_ulong();
+
+//        std::cout << tetra_id << std::endl;
 
         size_t i = 0;
         std::array<double, 2> points{};
@@ -186,12 +207,14 @@ double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
     return I;
 }
 
-void line::ts_tetra_intersections_pushback(std::bitset<32> data) {
+void line::ts_tetra_intersections_pushback(std::bitset<32> data, int internal_thread_id) {
+//    _threads_buffers[internal_thread_id].push_back(data);
+
     std::lock_guard<std::mutex> lock(_tetra_intersections_mutex);
     _tetra_intersections.push_back(data);
 }
 
-line::line(line&& ref_val) {
+line::line(line&& ref_val) noexcept {
     _x = ref_val._x;
     _y = ref_val._y;
     _tetra_intersections = std::move(ref_val._tetra_intersections);

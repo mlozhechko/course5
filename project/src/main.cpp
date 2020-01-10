@@ -7,7 +7,6 @@
 #include <app.hpp>
 
 const double pi = 3.14159265358979323846;
-const size_t threads_amount = 2;
 
 int main() {
     std::cout << "[1] ";

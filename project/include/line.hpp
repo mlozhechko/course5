@@ -8,7 +8,8 @@
 //#include <boost/container/flat_map.hpp>
 
 #include <tetra.hpp>
-#include <unordered_map>
+#include <config.hpp>
+
 #include <mutex>
 
 /*
@@ -17,7 +18,6 @@
  * add tetra intersection custom vector thread safe container
  */
 
-const int J = 2;
 
 struct intersection_data {
     double delta_z;
@@ -29,7 +29,7 @@ public:
     explicit line(double x, double y);
 
     line(line&) = delete;
-    line(line&&);
+    line(line&&) noexcept;
 
     double x();
     double y();
@@ -51,6 +51,9 @@ public:
                                     tetra_value alpha_signature,
                                     tetra_value q_signature);
 
+    void converse_threads_buffers();
+
+
 private:
     double find_polygon_intersection_z(
         const std::array<double, 3>& p1,
@@ -60,7 +63,7 @@ private:
     double _x, _y;
 //    bool alternation_flag{false};
 
-    void ts_tetra_intersections_pushback(std::bitset<32> data);
+    void ts_tetra_intersections_pushback(std::bitset<32> data, int internal_thread_id);
 
     /*
      * std::bitset<32> structure:
@@ -83,8 +86,9 @@ private:
      * TODO:
      * 2. create erase method for following containers
      */
-    std::array<std::bitset<32>, J> buffer_data{};
-    std::array<bool, J> buffer_flags{};
+    std::array<std::bitset<32>, AMOUNT_OF_THREADS> buffer_data{};
+    std::array<bool, AMOUNT_OF_THREADS> buffer_flags{};
+    std::array<std::vector<std::bitset<32>>, AMOUNT_OF_THREADS> _threads_buffers{};
 
     std::mutex _tetra_intersections_mutex;
 

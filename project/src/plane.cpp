@@ -1,7 +1,11 @@
 #include <plane.hpp>
+#include <atomic>
 
 plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries)
     : _global_boundaries(global_boundaries) {
+    _x = res_x;
+    _y = res_y;
+
     double delta_x(global_boundaries[0] - global_boundaries[1]);
     double delta_y(global_boundaries[2] - global_boundaries[3]);
 
@@ -32,7 +36,7 @@ size_t plane::count_all_intersections() {
     return sum;
 }
 
-size_t plane::find_intersections_with_tetrahedron(const tetra& tetra, size_t id) {
+size_t plane::find_intersections_with_tetrahedron(const tetra& tetra, size_t id, int internal_thread_id) {
     /*
      * 0001 0, 1, 2 points
      * 0010 0, 1, 3 points
@@ -41,10 +45,10 @@ size_t plane::find_intersections_with_tetrahedron(const tetra& tetra, size_t id)
      */
 
     size_t sum(0);
-    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[2].data()}, id, 0);
-    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[3].data()}, id, 1);
-    sum += find_intersections_with_polygon({tetra[0].data(), tetra[2].data(), tetra[3].data()}, id, 2);
-    sum += find_intersections_with_polygon({tetra[1].data(), tetra[2].data(), tetra[3].data()}, id, 3);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[2].data()}, id, 0, internal_thread_id);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[3].data()}, id, 1, internal_thread_id);
+    sum += find_intersections_with_polygon({tetra[0].data(), tetra[2].data(), tetra[3].data()}, id, 2, internal_thread_id);
+    sum += find_intersections_with_polygon({tetra[1].data(), tetra[2].data(), tetra[3].data()}, id, 3, internal_thread_id);
 
     if (sum % 2 == 1) {
         throw std::runtime_error("critical error. odd number of intersections");
@@ -61,7 +65,8 @@ double plane::line_rev_function_eq(const double *p1, const double *p2, double y)
     return (p1[0] - p2[0]) * (y - p1[1]) / (p1[1] - p2[1]) + p1[0];
 }
 
-size_t plane::find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id) {
+size_t plane::find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id,
+                                              int internal_thread_id) {
     size_t counter(0);
 
     std::sort(points.begin(), points.end(), [](auto& a, auto& b) {
@@ -130,7 +135,7 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
         const size_t x_min_index = std::ceil((x_min - _global_boundaries[1]) / _step_x);
 
         for (size_t i = x_min_index; i <= x_max_index; i++) {
-            _lines[i][y_index_it].add_tetra_intersection(id, polygon_id, 0);
+            _lines[i][y_index_it].add_tetra_intersection(id, polygon_id, internal_thread_id);
             counter++;
         }
 

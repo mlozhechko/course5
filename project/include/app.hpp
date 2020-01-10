@@ -9,6 +9,7 @@
 
 #include <plane.hpp>
 #include <tetra.hpp>
+#include <config.hpp>
 
 #include <vtkUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
