@@ -162,13 +162,40 @@ plane::trace_rays(const std::vector<tetra>& tetra_vec, const tetra_value value_a
     for (size_t i = 0; i < lines_size_1d; i++) {
         result_x[i].resize(lines_size_2d);
         result_y[i].resize(lines_size_2d);
-        for (size_t j = 0; j < lines_size_2d; j++) {
-            _lines[i][j].calculate_intersections(tetra_vec);
-            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
-            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
-
-        }
     }
+
+    const size_t limit = lines_size_1d * lines_size_2d;
+    std::atomic<size_t> i = 0;
+    auto func = [&]() {
+        size_t ic = i.fetch_add(1);
+        while (ic < limit) {
+            size_t ix = ic % lines_size_1d;
+            size_t iy = ic / lines_size_1d;
+            _lines[ix][iy].calculate_intersections(tetra_vec);
+            result_x[ix][iy] = _lines[ix][iy].direct_calculate_ray_value(tetra_vec, value_alpha);
+            result_y[ix][iy] = _lines[ix][iy].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+
+            ic = i.fetch_add(1);
+        }
+    };
+
+    std::vector<std::thread> threads;
+    for (size_t k = 0; k < AMOUNT_OF_THREADS; k++) {
+        threads.emplace_back(func);
+    }
+
+    for (size_t k = 0; k < AMOUNT_OF_THREADS; k++) {
+        threads[k].join();
+    }
+
+//    for (size_t i = 0; i < lines_size_1d; i++) {
+//        for (size_t j = 0; j < lines_size_2d; j++) {
+//            _lines[i][j].calculate_intersections(tetra_vec);
+//            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
+//            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+//
+//        }
+//    }
 
     return {result_x, result_y};
 }

@@ -87,9 +87,10 @@ void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<tet
     size_t tetrahedron_vector_size = tetrahedron_vector.size();
 
     auto func = [&](int id){
-        while (i < tetrahedron_vector_size) {
-            int ix = i++;
+        size_t ix = i.fetch_add(1);
+        while (ix < tetrahedron_vector_size) {
             task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[ix], ix, id);
+            ix = i.fetch_add(1);
         }
     };
 
