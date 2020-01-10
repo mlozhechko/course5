@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 #include <chrono>
+#include <atomic>
+#include <thread>
 
 #include <plane.hpp>
 #include <tetra.hpp>

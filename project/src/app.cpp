@@ -82,17 +82,26 @@ plane app::init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& gl
 
 void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<tetra>& tetrahedron_vector,
                                                            plane& task_plane) {
-    size_t min_intersections{0}, max_intersections{0};
-    min_intersections = max_intersections = task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[0], 0);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
+    size_t min_intersections{std::numeric_limits<size_t>::max()}, max_intersections{0};
+    std::atomic<size_t> i{0};
     size_t tetrahedron_vector_size = tetrahedron_vector.size();
-    for (size_t i = 1; i < tetrahedron_vector_size; i++) {
-        size_t res = task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
-        min_intersections = std::min(res, min_intersections);
-        max_intersections = std::max(res, max_intersections);
-    }
+
+    /*
+     * реализовать многопоточность в этом месте
+     *
+     * реализовать проброс или глобальную переменную с внутренней айди треда в класс таск плэйн
+     */
+
+    auto func = [&](int id){
+        task_plane.find_intersections_with_tetrahedron(tetrahedron_vector)
+    };
+    auto t1 = std::chrono::high_resolution_clock::now();
+//    for (size_t i = 0; i < tetrahedron_vector_size; i++) {
+//        size_t res = task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
+//        min_intersections = std::min(res, min_intersections);
+//        max_intersections = std::max(res, max_intersections);
+//    }
+
 
     auto t2 = std::chrono::high_resolution_clock::now();
 

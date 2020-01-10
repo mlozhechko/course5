@@ -130,7 +130,7 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
         const size_t x_min_index = std::ceil((x_min - _global_boundaries[1]) / _step_x);
 
         for (size_t i = x_min_index; i <= x_max_index; i++) {
-            _lines[i][y_index_it].add_tetra_intersection(id, polygon_id);
+            _lines[i][y_index_it].add_tetra_intersection(id, polygon_id, 0);
             counter++;
         }
 

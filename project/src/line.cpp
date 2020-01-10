@@ -1,6 +1,6 @@
 #include <line.hpp>
 
-line::line(double x, double y) : _x(x), _y(y), _cont_tetra_intersections(_tetra_intersections) {
+line::line(double x, double y) : _x(x), _y(y) {
     _tetra_intersections.reserve(50);
 }
 
@@ -12,15 +12,33 @@ double line::y() {
     return _y;
 }
 
-void line::add_tetra_intersection(size_t id, size_t polygon_id) {
-//    if (!alternation_flag) {
-//        _tetra_intersections.emplace_back(id);
-//    }
-//
-//    _tetra_intersections.back().set(28 + polygon_id);
-//    alternation_flag = !alternation_flag;
+const int DELIMITER_POS = 28;
 
-//    _cont_tetra_intersections.add_intersection(0, id | (polygon_id << 28u));
+void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id) {
+//    std::cout << _x << " " << _y << std::endl;
+//    std::cout << internal_thread_id << " " << id << " " << buffer_data[0] << std::endl;
+
+    buffer_data[internal_thread_id].set(DELIMITER_POS + polygon_id);
+    buffer_data[internal_thread_id] |= id;
+
+    if (buffer_flags[internal_thread_id]) {
+        ts_tetra_intersections_pushback(buffer_data[internal_thread_id]);
+        buffer_data[internal_thread_id] = 0;
+    }
+
+    buffer_flags[internal_thread_id] = !buffer_flags[internal_thread_id];
+
+    /*
+    if (!alternation_flag) {
+        _tetra_intersections.emplace_back(id);
+    }
+
+    _tetra_intersections.back().set(28 + polygon_id);
+    alternation_flag = !alternation_flag;
+
+
+    //_cont_tetra_intersections.add_intersection(0, id | (polygon_id << 28u));
+    */
 }
 
 size_t line::number_of_intersections() {
@@ -166,4 +184,16 @@ double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
         }
     }
     return I;
+}
+
+void line::ts_tetra_intersections_pushback(std::bitset<32> data) {
+    std::lock_guard<std::mutex> lock(_tetra_intersections_mutex);
+    _tetra_intersections.push_back(data);
+}
+
+line::line(line&& ref_val) {
+    _x = ref_val._x;
+    _y = ref_val._y;
+    _tetra_intersections = std::move(ref_val._tetra_intersections);
+    _intersections_delta = std::move(ref_val._intersections_delta);
 }

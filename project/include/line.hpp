@@ -5,7 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
-#include <boost/container/flat_map.hpp>
+//#include <boost/container/flat_map.hpp>
 
 #include <tetra.hpp>
 #include <unordered_map>
@@ -17,40 +17,7 @@
  * add tetra intersection custom vector thread safe container
  */
 
-const size_t AMOUNT_OF_THREADS = 2;
-
-class cont_tetra_intersection {
-public:
-    explicit cont_tetra_intersection(std::vector<std::bitset<32>>& tetra_intersections)
-        : _tetra_intersections(tetra_intersections) {
-        flags = {};
-        buffer = {};
-    };
-
-    void add_intersection(size_t thread_id, std::bitset<32> value) {
-        buffer[thread_id] |= value;
-        if (!flags[thread_id]) {
-            flags[thread_id] = true;
-        } else {
-            add_to_main_vector(buffer[thread_id]);
-            flags[thread_id] = false;
-            buffer[thread_id] = 0;
-        }
-    }
-
-private:
-
-    void add_to_main_vector(std::bitset<32> value) {
-        std::lock_guard<std::mutex> lock(add_to_main_vector_mutex);
-//        _tetra_intersections.push_back(value);
-    }
-
-    std::mutex add_to_main_vector_mutex;
-    std::array<bool, AMOUNT_OF_THREADS> flags;
-    std::array<std::bitset<32>, AMOUNT_OF_THREADS> buffer;
-
-    std::vector<std::bitset<32>>& _tetra_intersections;
-};
+const int J = 2;
 
 struct intersection_data {
     double delta_z;
@@ -61,10 +28,13 @@ class line {
 public:
     explicit line(double x, double y);
 
+    line(line&) = delete;
+    line(line&&);
+
     double x();
     double y();
 
-    void add_tetra_intersection(size_t id, size_t polygon_id);
+    void add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id);
     size_t number_of_intersections();
 
     void calculate_intersections(const std::vector<tetra>&);
@@ -88,7 +58,9 @@ private:
         const std::array<double, 3>& p3);
 
     double _x, _y;
-    bool alternation_flag{false};
+//    bool alternation_flag{false};
+
+    void ts_tetra_intersections_pushback(std::bitset<32> data);
 
     /*
      * std::bitset<32> structure:
@@ -107,5 +79,14 @@ private:
     std::vector<std::bitset<32>> _tetra_intersections;
     std::vector<intersection_data> _intersections_delta;
 
-    cont_tetra_intersection _cont_tetra_intersections{_tetra_intersections};
+    /*
+     * TODO:
+     * 2. create erase method for following containers
+     */
+    std::array<std::bitset<32>, J> buffer_data{};
+    std::array<bool, J> buffer_flags{};
+
+    std::mutex _tetra_intersections_mutex;
+
+//    cont_tetra_intersection _cont_tetra_intersections{_tetra_intersections};
 };
