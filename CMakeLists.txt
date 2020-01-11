@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.11)
 project(course)
 
+set(CMAKE_CPP_COMPILER gcc)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp -ftree-vectorize -mavx -march=native -mfpmath=sse")
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})

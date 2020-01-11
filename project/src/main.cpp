@@ -12,9 +12,9 @@ int main() {
     std::cout << "[1] ";
     std::string filename = "test.vtk";
     std::string res_filename = "result5.vti";
-    size_t res_x = 2500;
-    size_t res_y = 2000;
-    double projection_angle = 5;
+    size_t res_x = 1000;
+    size_t res_y = 1000;
+    double projection_angle = 85;
 
 
     std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
