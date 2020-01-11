@@ -45,7 +45,7 @@ void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thr
     }
 
     if (buffer_flags[internal_thread_id]) {
-        ts_tetra_intersections_pushback(buffer_data[internal_thread_id], internal_thread_id);
+        ts_tetra_intersections_pushback(buffer_data[internal_thread_id]);
         buffer_data[internal_thread_id] = 0;
     }
 
@@ -67,8 +67,6 @@ void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thr
 size_t line::number_of_intersections() {
     return _tetra_intersections.size();
 }
-
-
 
 struct set_intersection_data {
     double key_z;
@@ -207,9 +205,7 @@ double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
     return I;
 }
 
-void line::ts_tetra_intersections_pushback(std::bitset<32> data, int internal_thread_id) {
-//    _threads_buffers[internal_thread_id].push_back(data);
-
+void line::ts_tetra_intersections_pushback(std::bitset<32> data) {
     std::lock_guard<std::mutex> lock(_tetra_intersections_mutex);
     _tetra_intersections.push_back(data);
 }

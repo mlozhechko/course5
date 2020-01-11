@@ -11,6 +11,8 @@
 #include <tetra.hpp>
 #include <config.hpp>
 
+#include <omp.h>
+
 #include <vtkUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellData.h>

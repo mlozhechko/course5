@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <thread>
 
+#include <omp.h>
+
 #include <line.hpp>
 #include <tetra.hpp>
 
@@ -17,10 +19,7 @@ public:
 
     size_t count_all_intersections();
 
-    /*
-     * return amount of lines to intersect polygons
-     */
-    size_t find_intersections_with_tetrahedron(const tetra& tetra, size_t id, int internal_thread_id);
+    void find_intersections_with_tetra_vector(const std::vector<tetra>& tetra_vec);
 
     /*
      * trace_all rays
@@ -45,6 +44,11 @@ public:
      */
     void print_all_lines_with_intersection();
 private:
+    /*
+     * return amount of lines to intersect polygons
+     */
+    size_t find_intersections_with_tetrahedron(const tetra& tetra, size_t id, int internal_thread_id);
+
     /*
      * all line equations is on X,Y plane
      */

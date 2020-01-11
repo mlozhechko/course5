@@ -1,20 +1,21 @@
 #include <iostream>
 #include <algorithm>
 
+#include <config.hpp>
 #include <tetra.hpp>
 #include <line.hpp>
 #include <plane.hpp>
 #include <app.hpp>
 
-const double pi = 3.14159265358979323846;
 
 int main() {
     std::cout << "[1] ";
     std::string filename = "test.vtk";
-    std::string res_filename = "result85.vti";
-    size_t res_x = 1000;
-    size_t res_y = 1000;
-    double projection_angle = 85;
+    std::string res_filename = "result5.vti";
+    size_t res_x = 2500;
+    size_t res_y = 2000;
+    double projection_angle = 5;
+
 
     std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
     std::cout << "source file: " << filename << std::endl;

@@ -82,50 +82,12 @@ plane app::init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& gl
 
 void app::find_tetrahedron_vector_intersections_with_lines(const std::vector<tetra>& tetrahedron_vector,
                                                            plane& task_plane) {
-//    size_t min_intersections{std::numeric_limits<size_t>::max()}, max_intersections{0};
-    std::atomic<size_t> i{0};
-    size_t tetrahedron_vector_size = tetrahedron_vector.size();
-
-    auto func = [&](int id){
-        size_t ix = i.fetch_add(1);
-        while (ix < tetrahedron_vector_size) {
-            task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[ix], ix, id);
-            ix = i.fetch_add(1);
-        }
-    };
-
-    std::vector<std::thread> task_threads{};
     auto t1 = std::chrono::high_resolution_clock::now();
-
-    for (size_t j = 0; j < AMOUNT_OF_THREADS; j++) {
-        task_threads.emplace_back(func, j);
-    }
-
-    for (size_t j = 0; j < AMOUNT_OF_THREADS; j++) {
-        task_threads.at(j).join();
-    }
-
-//    std::thread x1(func, 0);
-//    std::thread x2(func, 1);
-//    x1.join();
-//    x2.join();
-
-//    for (size_t i = 0; i < tetrahedron_vector_size; i++) {
-//        size_t res = task_plane.find_intersections_with_tetrahedron(tetrahedron_vector[i], i);
-//        min_intersections = std::min(res, min_intersections);
-//        max_intersections = std::max(res, max_intersections);
-//    }
-
-
+    task_plane.find_intersections_with_tetra_vector(tetrahedron_vector);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout
-        << "find all intersections complete in: " << timer << " ms"
-        //        << std::endl
-        //        << "maximum and minimum amound of_intersections with tetrahedron "
-        //        << max_intersections << " " << min_intersections
-        << std::endl;
+    std::cout << "find all intersections complete in: " << timer << " ms" << std::endl;
 }
 
 std::pair<float_matrix, float_matrix>

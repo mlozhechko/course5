@@ -63,7 +63,7 @@ private:
     double _x, _y;
 //    bool alternation_flag{false};
 
-    void ts_tetra_intersections_pushback(std::bitset<32> data, int internal_thread_id);
+    void ts_tetra_intersections_pushback(std::bitset<32> data);
 
     /*
      * std::bitset<32> structure:

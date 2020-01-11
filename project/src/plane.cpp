@@ -1,3 +1,4 @@
+
 #include <plane.hpp>
 #include <atomic>
 
@@ -113,6 +114,8 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
     /*
      * iterate over triangle's edges and find intersection points
      */
+
+
     for (; y_index_it <= y_max_index; y_index_it++) {
         double x_max(0), x_min(0);
         if (position) {
@@ -164,38 +167,15 @@ plane::trace_rays(const std::vector<tetra>& tetra_vec, const tetra_value value_a
         result_y[i].resize(lines_size_2d);
     }
 
-    const size_t limit = lines_size_1d * lines_size_2d;
-    std::atomic<size_t> i = 0;
-    auto func = [&]() {
-        size_t ic = i.fetch_add(1);
-        while (ic < limit) {
-            size_t ix = ic % lines_size_1d;
-            size_t iy = ic / lines_size_1d;
-            _lines[ix][iy].calculate_intersections(tetra_vec);
-            result_x[ix][iy] = _lines[ix][iy].direct_calculate_ray_value(tetra_vec, value_alpha);
-            result_y[ix][iy] = _lines[ix][iy].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+#pragma omp parallel for default(none) shared(result_x, result_y, tetra_vec) num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8) collapse(2)
+    for (size_t i = 0; i < lines_size_1d; i++) {
+        for (size_t j = 0; j < lines_size_2d; j++) {
+            _lines[i][j].calculate_intersections(tetra_vec);
+            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
+            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
 
-            ic = i.fetch_add(1);
         }
-    };
-
-    std::vector<std::thread> threads;
-    for (size_t k = 0; k < AMOUNT_OF_THREADS; k++) {
-        threads.emplace_back(func);
     }
-
-    for (size_t k = 0; k < AMOUNT_OF_THREADS; k++) {
-        threads[k].join();
-    }
-
-//    for (size_t i = 0; i < lines_size_1d; i++) {
-//        for (size_t j = 0; j < lines_size_2d; j++) {
-//            _lines[i][j].calculate_intersections(tetra_vec);
-//            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
-//            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
-//
-//        }
-//    }
 
     return {result_x, result_y};
 }
@@ -207,5 +187,15 @@ void plane::print_all_lines_with_intersection() {
                 std::cout << "" << j.x() << " " << j.y() << "" << std::endl;
             }
         }
+    }
+}
+
+void plane::find_intersections_with_tetra_vector(const std::vector<tetra>& tetra_vec) {
+    size_t tetrahedron_vector_size = tetra_vec.size();
+
+#pragma omp parallel for default(none) shared(tetrahedron_vector_size, tetra_vec) num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8)
+    for (size_t i = 0; i < tetrahedron_vector_size; i++) {
+        int tid = omp_get_thread_num();
+        find_intersections_with_tetrahedron(tetra_vec[i], i, tid);
     }
 }
