@@ -23,6 +23,7 @@
 namespace app {
     vtkSmartPointer<vtkUnstructuredGrid> init_vtk_grid(const std::string& filename);
     std::vector<tetra> get_tetrahedron_vector(const std::string& filename);
+    std::vector<tetra> get_tetrahedron_vector_binary(const std::string& filename);
     void rotate_tetrahedron_vector(std::vector<tetra>&, double angle);
     std::array<double, 4> get_domain_boundaries(std::vector<tetra>&);
     void print_boundaries(const std::array<double, 4>&);

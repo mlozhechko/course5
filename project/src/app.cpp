@@ -44,9 +44,46 @@ std::vector<tetra> app::get_tetrahedron_vector(const std::string& filename) {
     return tetrahedron_vector;
 }
 
+std::vector<tetra> app::get_tetrahedron_vector_binary(const std::string& filename) {
+    std::vector<tetra> tetrahedron_vector{};
+    vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
+    vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
+
+    size_t number_of_cells = unstructured_grid->GetNumberOfCells();
+
+//    scalar_data->Print(std::cout);
+    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("AbsorpCoef");
+    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("radEnLooseRate");
+
+    tetrahedron_vector.reserve(number_of_cells);
+
+    for (size_t k = 0; k < number_of_cells; k++) {
+        /*
+         * in newer vtk versions should be replaced with range based iterators.
+         * which are already in nightly releases 04.11.19
+         */
+        vtkSmartPointer<vtkPoints> points = unstructured_grid->GetCell(k)->GetPoints();
+        std::array<std::array<double, 3>, 4> tmp_points{};
+        for (size_t i = 0; i < 4; i++) {
+            double *p = points->GetPoint(i);
+            std::copy(p, p + 3, tmp_points[i].begin());
+        }
+
+        double *tmp_q = scalars_q->GetTuple(k);
+        double *tmp_alpha = scalars_alpha->GetTuple(k);
+        tetra im(tmp_points, *tmp_alpha, *tmp_q);
+
+        tetrahedron_vector.push_back(im);
+    }
+    return tetrahedron_vector;
+}
+
 void app::rotate_tetrahedron_vector(std::vector<tetra>& tetrahedron_vector, double angle) {
-    for (auto& i: tetrahedron_vector) {
-        i.rotate_x(angle);
+    const size_t tetra_vec_size = tetrahedron_vector.size();
+
+#pragma omp parallel for default(none) shared(tetrahedron_vector, angle) schedule(dynamic, 8)
+    for (size_t i = 0; i < tetra_vec_size; i++) {
+        tetrahedron_vector[i].rotate_x(angle);
     }
 }
 
@@ -55,16 +92,41 @@ void app::rotate_tetrahedron_vector(std::vector<tetra>& tetrahedron_vector, doub
  * {x_max, x_min, y_max, y_min}
  */
 std::array<double, 4> app::get_domain_boundaries(std::vector<tetra>& tetrahedron_vector) {
-    std::array<double, 4> global_boundaries{tetrahedron_vector.at(0).get_boundaries()};
-    std::for_each(tetrahedron_vector.begin(), tetrahedron_vector.end(), [&global_boundaries](auto& x) {
-        auto tmp = x.get_boundaries();
-        global_boundaries[0] = std::max(global_boundaries[0], tmp[0]);
-        global_boundaries[1] = std::min(global_boundaries[1], tmp[1]);
-        global_boundaries[2] = std::max(global_boundaries[2], tmp[2]);
-        global_boundaries[3] = std::min(global_boundaries[3], tmp[3]);
-    });
+    auto pre_tmp = tetrahedron_vector.at(0).get_boundaries();
 
-    return global_boundaries;
+    double x_max = pre_tmp[0];
+    double x_min = pre_tmp[1];
+    double y_max = pre_tmp[2];
+    double y_min = pre_tmp[3];
+
+    const size_t size_of_vec = tetrahedron_vector.size();
+
+    /*
+     * TODO:
+     * 1. move to main!
+     */
+    omp_set_num_threads(AMOUNT_OF_THREADS);
+#pragma omp parallel for default(none) shared(tetrahedron_vector) reduction(max: x_max, y_max) reduction(min: x_min, y_min) schedule(dynamic, 8)
+    for (size_t i = 0; i < size_of_vec; i++) {
+        auto tmp = tetrahedron_vector[i].get_boundaries();
+        if (tmp[0] > x_max) {
+            x_max = tmp[0];
+        }
+        if (tmp[1] < x_min) {
+            x_min = tmp[1];
+        }
+        if (tmp[2] > y_max) {
+            y_max = tmp[2];
+        }
+        if (tmp[3] < y_min) {
+            y_min = tmp[3];
+        }
+    }
+
+    std::array<double, 4> res{x_max, x_min, y_max, y_min};
+//    std::cout << x_max << " " << x_min << " " << y_max << " " << y_min << std::endl;
+
+    return res;
 }
 
 void app::print_boundaries(const std::array<double, 4>& global_boundaries) {

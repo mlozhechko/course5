@@ -51,8 +51,7 @@ public:
                                     tetra_value alpha_signature,
                                     tetra_value q_signature);
 
-    void converse_threads_buffers();
-
+    void free_memory();
 
 private:
     double find_polygon_intersection_z(

@@ -3,7 +3,7 @@ project(course)
 
 set(CMAKE_CPP_COMPILER gcc)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp -ftree-vectorize -mavx -march=native -mfpmath=sse")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp")
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})

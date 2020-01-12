@@ -216,3 +216,8 @@ line::line(line&& ref_val) noexcept {
     _tetra_intersections = std::move(ref_val._tetra_intersections);
     _intersections_delta = std::move(ref_val._intersections_delta);
 }
+
+void line::free_memory() {
+    std::vector<std::bitset<32>>().swap(_tetra_intersections);
+    std::vector<intersection_data>().swap(_intersections_delta);
+}

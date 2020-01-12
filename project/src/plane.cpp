@@ -173,6 +173,7 @@ plane::trace_rays(const std::vector<tetra>& tetra_vec, const tetra_value value_a
             _lines[i][j].calculate_intersections(tetra_vec);
             result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
             result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+            _lines[i][j].free_memory();
 
         }
     }

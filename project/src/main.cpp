@@ -10,11 +10,11 @@
 
 int main() {
     std::cout << "[1] ";
-    std::string filename = "test.vtk";
+    std::string filename = "test2.vtk";
     std::string res_filename = "result5.vti";
     size_t res_x = 1000;
     size_t res_y = 1000;
-    double projection_angle = 85;
+    double projection_angle = 5;
 
 
     std::cout << "defined grid resolution: " << res_x << "x" << res_y << std::endl;
@@ -24,10 +24,17 @@ int main() {
     plane current_plane{};
     std::array<double, 4> domain_boundaries{};
     try {
-        tetrahedron_vector = app::get_tetrahedron_vector(filename);
+        auto t1 = std::chrono::high_resolution_clock::now();
+
+        tetrahedron_vector = app::get_tetrahedron_vector_binary(filename);
         app::rotate_tetrahedron_vector(tetrahedron_vector, pi * projection_angle / 180.);
         domain_boundaries = app::get_domain_boundaries(tetrahedron_vector);
         current_plane = app::init_plane_grid(res_x, res_y, domain_boundaries);
+
+        auto t2 = std::chrono::high_resolution_clock::now();
+
+        auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        std::cout << "initialization complete in: " << timer << " ms" << std::endl;
     } catch (const std::exception& e) {
         std::cerr
             << "initialization error" << std::endl
@@ -35,7 +42,7 @@ int main() {
 
         return -1;
     }
-    std::cout << "grid initialized, source data produced" << std::endl;
+    std::cout << "data loaded from file, tetrahedrons rotated. ready for ray-tracing" << std::endl;
 
     std::cout << "[2] ";
     try {
