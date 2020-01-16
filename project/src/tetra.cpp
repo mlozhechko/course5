@@ -7,7 +7,7 @@ tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double alpha, d
 }
 
 void tetra::rotate_x(double angle) {
-    for (auto& i: _points) {
+    for (auto& i : _points) {
         point_rotate_x(angle, i);
     }
 }
@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& os, const tetra& lt) {
     double q = lt.access_value(tetra_value::Q);
 
     os << "lite tetrahedron. q = " << q << ", alpha = " << alpha << std::endl;
-    for (const auto& it: lt._points) {
+    for (const auto& it : lt._points) {
         os << it[0] << " " << it[1] << " " << it[2] << std::endl;
     }
     return os;

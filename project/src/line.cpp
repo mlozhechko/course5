@@ -2,17 +2,17 @@
 
 line::line(double x, double y) : _x(x), _y(y) {
     _tetra_intersections.reserve(50);
-//
-//    for (size_t i = 0; i < AMOUNT_OF_THREADS; i++) {
-//        _threads_buffers[i].reserve(10);
-//    }
+    //
+    //    for (size_t i = 0; i < AMOUNT_OF_THREADS; i++) {
+    //        _threads_buffers[i].reserve(10);
+    //    }
 }
 
-double line::x() {
+double line::x() const {
     return _x;
 }
 
-double line::y() {
+double line::y() const {
     return _y;
 }
 
@@ -27,8 +27,9 @@ const int DELIMITER_POS = 28;
 static std::bitset<32> mask{0x0FFFFFFF};
 
 void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id) {
-//    std::cout << _x << " " << _y << std::endl;
-//    std::cout << internal_thread_id << " " << id << " " << buffer_data[0] << std::endl;
+    if (_marked_void) {
+        return;
+    }
 
     buffer_data[internal_thread_id].set(DELIMITER_POS + polygon_id);
     buffer_data[internal_thread_id] |= id;
@@ -37,9 +38,10 @@ void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thr
      * check for data races and other bad things
      */
     if (!buffer_flags[internal_thread_id]) {
-        if ( (buffer_data[internal_thread_id] & mask).to_ulong() != id) {
+        if ((buffer_data[internal_thread_id] & mask).to_ulong() != id) {
             std::cout << internal_thread_id << std::endl;
-            std::cout << (buffer_data[internal_thread_id] & mask).to_ulong() << " " << id << std::endl;
+            std::cout << (buffer_data[internal_thread_id] & mask).to_ulong() << " " << id
+                      << std::endl;
             throw std::runtime_error("tetrahedron intersection fatal data error");
         }
     }
@@ -80,16 +82,19 @@ struct set_intersection_data_cmp {
 };
 
 void line::calculate_intersections(const std::vector<tetra>& tetra_vector) {
-//    boost::container::flat_set<set_intersection_data, set_intersection_data_cmp> values;
-//    std::cout << "!" << tetra_vector.size() << std::endl;
+    //    boost::container::flat_set<set_intersection_data,
+    //    set_intersection_data_cmp> values; std::cout << "!" <<
+    //    tetra_vector.size() << std::endl;
 
     std::vector<set_intersection_data> values;
-    values.reserve(200);
 
-    for (const auto& it: _tetra_intersections) {
+    size_t intrs_size = _tetra_intersections.size();
+    values.reserve(intrs_size);
+
+    for (const auto& it : _tetra_intersections) {
         size_t tetra_id = (it & mask).to_ulong();
 
-//        std::cout << tetra_id << std::endl;
+        //        std::cout << tetra_id << std::endl;
 
         size_t i = 0;
         std::array<double, 2> points{};
@@ -117,18 +122,15 @@ void line::calculate_intersections(const std::vector<tetra>& tetra_vector) {
         }
 
         if (points.at(0) < points.at(1)) {
-            std::swap(points.at(0), points.at(1));
+            const auto tmp = points.at(0);
+            points.at(0) = points.at(1);
+            points.at(1) = tmp;
         }
 
-        intersection_data data{
-            .delta_z = points.at(0) - points.at(1),
-            .tetra_id = static_cast<unsigned int>(tetra_id)
-        };
+        intersection_data data{.delta_z = points.at(0) - points.at(1),
+                               .tetra_id = static_cast<unsigned int>(tetra_id)};
 
-        set_intersection_data set_data{
-            .key_z = points[0],
-            .data = data
-        };
+        set_intersection_data set_data{.key_z = points[0], .data = data};
 
         values.push_back(set_data);
     }
@@ -138,26 +140,29 @@ void line::calculate_intersections(const std::vector<tetra>& tetra_vector) {
     std::vector<intersection_data> delta_values;
     delta_values.reserve(values.size());
 
-    for (auto& it: values) {
+    for (auto& it : values) {
         delta_values.push_back(it.data);
     }
 
     _intersections_delta = std::move(delta_values);
 }
 
-double line::find_polygon_intersection_z(const std::array<double, 3>& p1, const std::array<double, 3>& p2,
+double line::find_polygon_intersection_z(const std::array<double, 3>& p1,
+                                         const std::array<double, 3>& p2,
                                          const std::array<double, 3>& p3) {
     /*
      * using matrix plane equation
      *
      * (x - x1) * following minor part
      */
-    double x_x1 = (_x - p1[0]) * ((p2[1] - p1[1]) * (p3[2] - p1[2]) - (p3[1] - p1[1]) * (p2[2] - p1[2]));
+    double x_x1 =
+        (_x - p1[0]) * ((p2[1] - p1[1]) * (p3[2] - p1[2]) - (p3[1] - p1[1]) * (p2[2] - p1[2]));
 
     /*
      * (y - y1) * following minor part
      */
-    double y_y1 = (_y - p1[1]) * ((p2[0] - p1[0]) * (p3[2] - p1[2]) - (p3[0] - p1[0]) * (p2[2] - p1[2]));
+    double y_y1 =
+        (_y - p1[1]) * ((p2[0] - p1[0]) * (p3[2] - p1[2]) - (p3[0] - p1[0]) * (p2[2] - p1[2]));
 
     /*
      * only minor part of (z - z1)
@@ -168,8 +173,12 @@ double line::find_polygon_intersection_z(const std::array<double, 3>& p1, const 
     return z_value;
 }
 
-double
-line::direct_calculate_ray_value(const std::vector<tetra>& tetra_vector, tetra_value value_signature) {
+double line::direct_calculate_ray_value(const std::vector<tetra>& tetra_vector,
+                                        tetra_value value_signature) {
+    if (_marked_void) {
+        return _mark_value;
+    }
+
     double sum = 0;
 
     const size_t length = _tetra_intersections.size();
@@ -184,8 +193,11 @@ line::direct_calculate_ray_value(const std::vector<tetra>& tetra_vector, tetra_v
 }
 
 double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
-                                      tetra_value alpha_signature,
-                                      tetra_value q_signature) {
+                                      tetra_value alpha_signature, tetra_value q_signature) {
+    if (_marked_void) {
+        return _mark_value;
+    }
+
     double I = 0;
     const auto length = static_cast<ssize_t>(_tetra_intersections.size());
 
@@ -220,4 +232,9 @@ line::line(line&& ref_val) noexcept {
 void line::free_memory() {
     std::vector<std::bitset<32>>().swap(_tetra_intersections);
     std::vector<intersection_data>().swap(_intersections_delta);
+}
+
+void line::mark_void(double mark_value) {
+    _marked_void = true;
+    _mark_value = mark_value;
 }

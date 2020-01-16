@@ -2,12 +2,10 @@
 
 #include <array>
 #include <cmath>
-#include <string>
 #include <iostream>
+#include <string>
 
-enum class tetra_value : size_t {
-    alpha = 0, Q = 1
-};
+enum class tetra_value : size_t { alpha = 0, Q = 1 };
 
 class tetra {
 public:
