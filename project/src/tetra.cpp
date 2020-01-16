@@ -1,9 +1,9 @@
 #include <tetra.hpp>
 
-tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double alpha, double q)
+tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2)
     : _points(points) {
-    _tetra_values[static_cast<size_t>(tetra_value::alpha)] = alpha;
-    _tetra_values[static_cast<size_t>(tetra_value::Q)] = q;
+    _tetra_values[static_cast<size_t>(tetra_value::alpha)] = v1;
+    _tetra_values[static_cast<size_t>(tetra_value::Q)] = v2;
 }
 
 void tetra::rotate_x(double angle) {

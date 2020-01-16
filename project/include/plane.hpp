@@ -4,35 +4,31 @@
 #include <array>
 #include <thread>
 #include <vector>
+#include <list>
 
 #include <omp.h>
 
 #include <line.hpp>
 #include <tetra.hpp>
-
-using float_matrix = std::vector<std::vector<float>>;
-
-/*
- * TODO:
- * 1. incapsulate tetra vector
- */
+#include <object3d_base.hpp>
+#include <object2d.hpp>
 
 class plane {
 public:
     plane() = default;
-    plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries);
+//    explicit plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries);
+    explicit plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d);
 
-    void mark_accretion_disk_space();
-    std::vector<tetra> build3d_model_donor_roche_lobe();
+//    void mark_accretion_disk_space();
+//    std::vector<tetra> build3d_model_donor_roche_lobe();
 
-    void find_intersections_with_tetra_vector(const std::vector<tetra>& tetra_vec);
+    void find_intersections();
 
     /*
      * trace_all rays and write result of tracing to 2 float matrices
      */
 
-    std::pair<float_matrix, float_matrix> trace_rays(const std::vector<tetra>& tetra_vec,
-                                                     tetra_value value_alpha, tetra_value value_Q);
+    object2d trace_rays(const tetra_value value_alpha, const tetra_value value_Q);
 
     size_t count_all_intersections();
 
@@ -68,6 +64,8 @@ private:
 
     size_t find_intersections_with_polygon(std::array<const double*, 3> points, size_t id,
                                            size_t polygon_id, int internal_thread_id);
+
+    std::shared_ptr<std::vector<tetra>> _data{};
 
     /*
      * lines indexes order is [x][y]

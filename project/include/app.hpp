@@ -27,7 +27,7 @@ std::vector<tetra> get_tetrahedron_vector_binary(const std::string& filename);
 void rotate_tetrahedron_vector(std::vector<tetra>&, double angle);
 std::array<double, 4> get_domain_boundaries(std::vector<tetra>&);
 void print_boundaries(const std::array<double, 4>&);
-plane init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& global_boundaries);
+//plane init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& global_boundaries);
 
 void find_tetrahedron_vector_intersections_with_lines(const std::vector<tetra>& tetrahedron_vector,
                                                       plane& task_plane);

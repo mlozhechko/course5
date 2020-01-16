@@ -13,6 +13,8 @@ const double L = 0.945;
 // accretor properties
 const double acc_x0 = 1;
 const double acc_y0 = 0;
+const double acc_z0 = 0;
+
 const double acc_r = 0.02;
 const double Ma = 0.73;
 

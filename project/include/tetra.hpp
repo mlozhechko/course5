@@ -9,7 +9,7 @@ enum class tetra_value : size_t { alpha = 0, Q = 1 };
 
 class tetra {
 public:
-    explicit tetra(const std::array<std::array<double, 3>, 4>& points, double alpha, double q);
+    explicit tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2);
 
     const std::array<double, 3>& operator[](size_t i) const {
         return _points[i];

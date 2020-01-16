@@ -1,81 +1,81 @@
 #include <app.hpp>
 
-vtkSmartPointer<vtkUnstructuredGrid> app::init_vtk_grid(const std::string& filename) {
-    auto reader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
-    reader->SetFileName(filename.c_str());
-    reader->SetReadAllScalars(true);
-    reader->Update();
-
-    //    reader->Print(std::cout);
-    return reader->GetOutput();
-}
-
-std::vector<tetra> app::get_tetrahedron_vector(const std::string& filename) {
-    std::vector<tetra> tetrahedron_vector{};
-    vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
-    vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
-
-    size_t number_of_cells = unstructured_grid->GetNumberOfCells();
-
-    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("alpha");
-    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("Q");
-
-    tetrahedron_vector.reserve(number_of_cells);
-
-    for (size_t k = 0; k < number_of_cells; k++) {
-        /*
-         * in newer vtk versions should be replaced with range based iterators.
-         * which are already in nightly releases 04.11.19
-         */
-        vtkSmartPointer<vtkPoints> points = unstructured_grid->GetCell(k)->GetPoints();
-        std::array<std::array<double, 3>, 4> tmp_points{};
-        for (size_t i = 0; i < 4; i++) {
-            double* p = points->GetPoint(i);
-            std::copy(p, p + 3, tmp_points[i].begin());
-        }
-
-        double* tmp_q = scalars_q->GetTuple(k);
-        double* tmp_alpha = scalars_alpha->GetTuple(k);
-        tetra im(tmp_points, *tmp_alpha, *tmp_q);
-
-        tetrahedron_vector.push_back(im);
-    }
-    return tetrahedron_vector;
-}
-
-std::vector<tetra> app::get_tetrahedron_vector_binary(const std::string& filename) {
-    std::vector<tetra> tetrahedron_vector{};
-    vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
-    vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
-
-    size_t number_of_cells = unstructured_grid->GetNumberOfCells();
-
-    //    scalar_data->Print(std::cout);
-    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("AbsorpCoef");
-    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("radEnLooseRate");
-
-    tetrahedron_vector.reserve(number_of_cells);
-
-    for (size_t k = 0; k < number_of_cells; k++) {
-        /*
-         * in newer vtk versions should be replaced with range based iterators.
-         * which are already in nightly releases 04.11.19
-         */
-        vtkSmartPointer<vtkPoints> points = unstructured_grid->GetCell(k)->GetPoints();
-        std::array<std::array<double, 3>, 4> tmp_points{};
-        for (size_t i = 0; i < 4; i++) {
-            double* p = points->GetPoint(i);
-            std::copy(p, p + 3, tmp_points[i].begin());
-        }
-
-        double* tmp_q = scalars_q->GetTuple(k);
-        double* tmp_alpha = scalars_alpha->GetTuple(k);
-        tetra im(tmp_points, *tmp_alpha, *tmp_q);
-
-        tetrahedron_vector.push_back(im);
-    }
-    return tetrahedron_vector;
-}
+//vtkSmartPointer<vtkUnstructuredGrid> app::init_vtk_grid(const std::string& filename) {
+//    auto reader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
+//    reader->SetFileName(filename.c_str());
+//    reader->SetReadAllScalars(true);
+//    reader->Update();
+//
+//    //    reader->Print(std::cout);
+//    return reader->GetOutput();
+//}
+//
+//std::vector<tetra> app::get_tetrahedron_vector(const std::string& filename) {
+//    std::vector<tetra> tetrahedron_vector{};
+//    vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
+//    vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
+//
+//    size_t number_of_cells = unstructured_grid->GetNumberOfCells();
+//
+//    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("alpha");
+//    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("Q");
+//
+//    tetrahedron_vector.reserve(number_of_cells);
+//
+//    for (size_t k = 0; k < number_of_cells; k++) {
+//        /*
+//         * in newer vtk versions should be replaced with range based iterators.
+//         * which are already in nightly releases 04.11.19
+//         */
+//        vtkSmartPointer<vtkPoints> points = unstructured_grid->GetCell(k)->GetPoints();
+//        std::array<std::array<double, 3>, 4> tmp_points{};
+//        for (size_t i = 0; i < 4; i++) {
+//            double* p = points->GetPoint(i);
+//            std::copy(p, p + 3, tmp_points[i].begin());
+//        }
+//
+//        double* tmp_q = scalars_q->GetTuple(k);
+//        double* tmp_alpha = scalars_alpha->GetTuple(k);
+//        tetra im(tmp_points, *tmp_alpha, *tmp_q);
+//
+//        tetrahedron_vector.push_back(im);
+//    }
+//    return tetrahedron_vector;
+//}
+//
+//std::vector<tetra> app::get_tetrahedron_vector_binary(const std::string& filename) {
+//    std::vector<tetra> tetrahedron_vector{};
+//    vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
+//    vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
+//
+//    size_t number_of_cells = unstructured_grid->GetNumberOfCells();
+//
+//    //    scalar_data->Print(std::cout);
+//    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("AbsorpCoef");
+//    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("radEnLooseRate");
+//
+//    tetrahedron_vector.reserve(number_of_cells);
+//
+//    for (size_t k = 0; k < number_of_cells; k++) {
+//        /*
+//         * in newer vtk versions should be replaced with range based iterators.
+//         * which are already in nightly releases 04.11.19
+//         */
+//        vtkSmartPointer<vtkPoints> points = unstructured_grid->GetCell(k)->GetPoints();
+//        std::array<std::array<double, 3>, 4> tmp_points{};
+//        for (size_t i = 0; i < 4; i++) {
+//            double* p = points->GetPoint(i);
+//            std::copy(p, p + 3, tmp_points[i].begin());
+//        }
+//
+//        double* tmp_q = scalars_q->GetTuple(k);
+//        double* tmp_alpha = scalars_alpha->GetTuple(k);
+//        tetra im(tmp_points, *tmp_alpha, *tmp_q);
+//
+//        tetrahedron_vector.push_back(im);
+//    }
+//    return tetrahedron_vector;
+//}
 
 void app::rotate_tetrahedron_vector(std::vector<tetra>& tetrahedron_vector, double angle) {
     const size_t tetra_vec_size = tetrahedron_vector.size();
@@ -138,37 +138,37 @@ void app::print_boundaries(const std::array<double, 4>& global_boundaries) {
               << "y_min = " << global_boundaries[3] << std::endl;
 }
 
-plane app::init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& global_boundaries) {
-    return plane(res_x, res_y, global_boundaries);
-}
+//plane app::init_plane_grid(size_t res_x, size_t res_y, std::array<double, 4>& global_boundaries) {
+//    return plane(res_x, res_y, global_boundaries);
+//}
 
 void app::find_tetrahedron_vector_intersections_with_lines(
     const std::vector<tetra>& tetrahedron_vector, plane& task_plane) {
     auto t1 = std::chrono::high_resolution_clock::now();
-    task_plane.mark_accretion_disk_space();
-    task_plane.find_intersections_with_tetra_vector(tetrahedron_vector);
+//    task_plane.mark_accretion_disk_space();
+    task_plane.find_intersections();
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "find all intersections complete in: " << timer << " ms" << std::endl;
 }
 
-std::pair<float_matrix, float_matrix> app::trace_rays(plane& current_plane,
-                                                      std::vector<tetra>& tetrahedron_vector,
-                                                      tetra_value value_alpha,
-                                                      tetra_value value_q) {
-    auto t1 = std::chrono::high_resolution_clock::now();
-    //    std::cout << current_plane.count_all_intersections() << std::endl;
-
-    auto res = current_plane.trace_rays(tetrahedron_vector, value_alpha, value_q);
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
-    std::cout << "trace all rays complete in: " << timer << " ms" << std::endl;
-
-    return res;
-}
+//std::pair<float_matrix, float_matrix> app::trace_rays(plane& current_plane,
+//                                                      std::vector<tetra>& tetrahedron_vector,
+//                                                      tetra_value value_alpha,
+//                                                      tetra_value value_q) {
+//    auto t1 = std::chrono::high_resolution_clock::now();
+//    //    std::cout << current_plane.count_all_intersections() << std::endl;
+//
+//    auto res = current_plane.trace_rays(value_alpha, value_q);
+//
+//    auto t2 = std::chrono::high_resolution_clock::now();
+//    auto timer = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+//
+//    std::cout << "trace all rays complete in: " << timer << " ms" << std::endl;
+//
+//    return res;
+//}
 
 void app::produce_result(std::pair<float_matrix, float_matrix>& data, size_t res_x, size_t res_y,
                          const std::string& result_filename) {

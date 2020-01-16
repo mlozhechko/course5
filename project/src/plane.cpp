@@ -2,29 +2,29 @@
 #include <atomic>
 #include <plane.hpp>
 
-plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries)
-    : _global_boundaries(global_boundaries) {
-    _x = res_x;
-    _y = res_y;
-
-    double delta_x(global_boundaries[0] - global_boundaries[1]);
-    double delta_y(global_boundaries[2] - global_boundaries[3]);
-
-    _step_x = delta_x / (res_x - 1.);
-    _step_y = delta_y / (res_y - 1.);
-
-    _lines.resize(res_x);
-    double current_x = global_boundaries[1]; // x_min
-    for (size_t i = 0; i < res_x; i++) {
-        double current_y = global_boundaries[3]; // y_min
-        _lines.at(i).reserve(res_y);
-        for (size_t j = 0; j < res_y; j++) {
-            _lines.at(i).push_back(line(current_x, current_y));
-            current_y = current_y + _step_y;
-        }
-        current_x = current_x + _step_x;
-    }
-}
+//plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries)
+//    : _global_boundaries(global_boundaries) {
+//    _x = res_x;
+//    _y = res_y;
+//
+//    double delta_x(global_boundaries[0] - global_boundaries[1]);
+//    double delta_y(global_boundaries[2] - global_boundaries[3]);
+//
+//    _step_x = delta_x / (res_x - 1.);
+//    _step_y = delta_y / (res_y - 1.);
+//
+//    _lines.resize(res_x);
+//    double current_x = global_boundaries[1]; // x_min
+//    for (size_t i = 0; i < res_x; i++) {
+//        double current_y = global_boundaries[3]; // y_min
+//        _lines.at(i).reserve(res_y);
+//        for (size_t j = 0; j < res_y; j++) {
+//            _lines.at(i).push_back(line(current_x, current_y));
+//            current_y = current_y + _step_y;
+//        }
+//        current_x = current_x + _step_x;
+//    }
+//}
 
 size_t plane::count_all_intersections() {
     size_t sum = 0;
@@ -154,9 +154,7 @@ size_t plane::find_intersections_with_polygon(std::array<const double*, 3> point
     return counter;
 }
 
-std::pair<float_matrix, float_matrix> plane::trace_rays(const std::vector<tetra>& tetra_vec,
-                                                        const tetra_value value_alpha,
-                                                        const tetra_value value_Q) {
+object2d plane::trace_rays(const tetra_value value_alpha, const tetra_value value_Q) {
     std::vector<std::vector<float>> result_x{};
     std::vector<std::vector<float>> result_y{};
     result_x.resize(_lines.size());
@@ -173,18 +171,18 @@ std::pair<float_matrix, float_matrix> plane::trace_rays(const std::vector<tetra>
         result_y[i].resize(lines_size_2d);
     }
 
-#pragma omp parallel for default(none) shared(result_x, result_y, tetra_vec)                       \
+#pragma omp parallel for default(none) shared(result_x, result_y, _data)                       \
     num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8) collapse(2)
     for (size_t i = 0; i < lines_size_1d; i++) {
         for (size_t j = 0; j < lines_size_2d; j++) {
-            _lines[i][j].calculate_intersections(tetra_vec);
-            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(tetra_vec, value_alpha);
-            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(tetra_vec, value_alpha, value_Q);
+            _lines[i][j].calculate_intersections(*_data);
+            result_x[i][j] = _lines[i][j].direct_calculate_ray_value(*_data, value_alpha);
+            result_y[i][j] = _lines[i][j].integrate_ray_value_by_i(*_data, value_alpha, value_Q);
             _lines[i][j].free_memory();
         }
     }
 
-    return {result_x, result_y};
+    return object2d{std::pair{result_x, result_y}};
 }
 
 void plane::print_all_lines_with_intersection() {
@@ -197,14 +195,14 @@ void plane::print_all_lines_with_intersection() {
     }
 }
 
-void plane::find_intersections_with_tetra_vector(const std::vector<tetra>& tetra_vec) {
-    size_t tetrahedron_vector_size = tetra_vec.size();
+void plane::find_intersections() {
+    size_t tetrahedron_vector_size = _data->size();
 
-#pragma omp parallel for default(none) shared(tetrahedron_vector_size, tetra_vec)                  \
+#pragma omp parallel for default(none) shared(tetrahedron_vector_size, _data)                  \
     num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8)
     for (size_t i = 0; i < tetrahedron_vector_size; i++) {
         int tid = omp_get_thread_num();
-        find_intersections_with_tetrahedron(tetra_vec[i], i, tid);
+        find_intersections_with_tetrahedron((*_data)[i], i, tid);
     }
 }
 
@@ -213,29 +211,29 @@ void plane::find_intersections_with_tetra_vector(const std::vector<tetra>& tetra
  *
  * equation: (x - x0)^2 + (y - y0)^2 == acc_r^2
  */
-void plane::mark_accretion_disk_space() {
-    const size_t y_max_index = std::floor(get_pixel_by_y(acc_y0 + acc_r));
-    const size_t y_min_index = std::ceil(get_pixel_by_y(acc_y0 - acc_r));
-    double current_y_it = acc_y0 - acc_r;
-
-    for (size_t y_it = y_min_index; y_it <= y_max_index; y_it++) {
-        /* xp = (x - x0) = sqrt(acc_r^2 - (y - y0)^2) */
-        double yp = (current_y_it - acc_y0);
-        double xp = sqrt(acc_r * acc_r - yp * yp);
-
-        double x_max_it = xp + acc_x0;
-        double x_min_it = acc_x0 - xp;
-
-        const size_t x_max_index = std::floor(get_pixel_by_x(x_max_it));
-        const size_t x_min_index = std::ceil(get_pixel_by_x(x_min_it));
-
-        for (size_t x_it = x_min_index; x_it <= x_max_index; x_it++) {
-            _lines[x_it][y_it].mark_void(marked_accretor_value);
-        }
-
-        current_y_it += _step_y;
-    }
-}
+//void plane::mark_accretion_disk_space() {
+//    const size_t y_max_index = std::floor(get_pixel_by_y(acc_y0 + acc_r));
+//    const size_t y_min_index = std::ceil(get_pixel_by_y(acc_y0 - acc_r));
+//    double current_y_it = acc_y0 - acc_r;
+//
+//    for (size_t y_it = y_min_index; y_it <= y_max_index; y_it++) {
+//        /* xp = (x - x0) = sqrt(acc_r^2 - (y - y0)^2) */
+//        double yp = (current_y_it - acc_y0);
+//        double xp = sqrt(acc_r * acc_r - yp * yp);
+//
+//        double x_max_it = xp + acc_x0;
+//        double x_min_it = acc_x0 - xp;
+//
+//        const size_t x_max_index = std::floor(get_pixel_by_x(x_max_it));
+//        const size_t x_min_index = std::ceil(get_pixel_by_x(x_min_it));
+//
+//        for (size_t x_it = x_min_index; x_it <= x_max_index; x_it++) {
+//            _lines[x_it][y_it].mark_void(marked_accretor_value);
+//        }
+//
+//        current_y_it += _step_y;
+//    }
+//}
 
 double plane::get_pixel_by_x(double x) {
     return (x - _global_boundaries[1]) / _step_x;
@@ -309,164 +307,209 @@ void add_vector(std::array<double, 3>& arr1, const std::array<double, 3>& arr2) 
 void print_vector(const std::array<double, 3>& vec) {
     std::cout << "(" << vec[0] << "," /* << vec[1] << " "*/ << vec[2] << ")" << std::endl;
 }
+//
+//
+//std::vector<tetra> plane::build3d_model_donor_roche_lobe() {
+//    /*
+//     * assume that in the beginning roche lobe placed on x axis
+//     *
+//     * build 3d model and then rotate it
+//     */
+//
+//    double donor_pos_x = 1 - L;
+//    double mass_center_pos_x = (donor_pos_x * Md + acc_x0 * Ma) / (Ma + Md);
+//    double alpha = Md / (Ma + Md);
+//    //    double lagrange1_pos_x = mass_center_pos_x - L * (1 - pow((alpha / 3.), 1. / 3.));
+//    //    std::cout << lagrange1_pos_x << std::endl;
+//
+//    /*
+//     * for some reason defined lagrange_pos_x is another value
+//     */
+//    double lagrange1_pos_x = 0.35515;
+//
+//    /*
+//     * let norm multiply value by G_SOL
+//     * by definition OMEGA is perpendicular to r
+//     *
+//     * using formula (4) https://arxiv.org/pdf/1702.00587.pdf
+//     */
+//
+//    /*
+//     * let's find potential
+//     */
+//    const double l1_potential =
+//        roche_lobe_potential({lagrange1_pos_x, 0, 0}, acc_x0, donor_pos_x, mass_center_pos_x);
+//    //    std::cout << l1_potential << std::endl;
+//
+//    const std::array<double, 3> def_step_vector{0.001, 0, 0};
+//
+//    double step_angle_x = PI / 256;
+//    double step_angle_y = PI / 256;
+//
+//    double angle_x = 0;
+//    double angle_y = -PI + step_angle_y;
+//
+//    std::array<double, 3> bottom_point{};
+//    std::array<double, 3> top_point{};
+//
+//    {
+//        std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
+//        std::array<double, 3> step_vector{0, 0, 0.001};
+//
+//        double f_value{};
+//        do {
+//            add_vector(point_trace_vec, step_vector);
+//            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
+//        } while (f_value < l1_potential);
+//
+//        top_point = point_trace_vec;
+//        point_trace_vec = {donor_pos_x, 0, 0};
+//        step_vector = {0, 0, -0.001};
+//
+//        do {
+//            add_vector(point_trace_vec, step_vector);
+//            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
+//        } while (f_value < l1_potential);
+//
+//        bottom_point = point_trace_vec;
+//    }
+//
+//    std::vector<std::vector<std::array<double, 3>>> lobe_points{};
+//
+//    /*
+//     * TODO:
+//     * 1. resize vectors in tracing
+//     * 2. resize lobe 3d model
+//     * 3. parallelize algorithm
+//     * 4. refactor code (!)
+//     * 5. refactor tetra scalar values, implement base class that don't explicitly rely on q and
+//     * alpha, implement derivative classes for roche_lobe and star center
+//     * 6. implement write 3d model object data back to .vtk (unstructured_grid_tetra)
+//     */
+//
+//    while (angle_y < (PI - step_angle_y + std::numeric_limits<double>::epsilon())) {
+//        std::array<double, 3> y_step_vector = rotate_vector_by_z_axis(def_step_vector, angle_y);
+//        angle_y += step_angle_y;
+//
+//        std::vector<std::array<double, 3>> line{};
+//        while (angle_x < 2 * PI - step_angle_x + std::numeric_limits<double>::epsilon()) {
+//            std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
+//            std::array<double, 3> step_vector = rotate_vector_by_y_axis(y_step_vector, angle_x);
+//
+//            double f_value{};
+//            do {
+//                add_vector(point_trace_vec, step_vector);
+//                f_value =
+//                    roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
+//            } while (f_value < l1_potential);
+//
+//            line.push_back(point_trace_vec);
+//            angle_x += step_angle_x;
+//        }
+//
+//        lobe_points.push_back(std::move(line));
+//        angle_x = 0;
+//    }
+//
+//    /*
+//     * create vector of tetras of lobe
+//     *
+//     * main cycle from bottom to top
+//     */
+//
+//    const std::array<double, 3> center{donor_pos_x, 0, 0};
+//    std::vector<tetra> lobe_3d_model{};
+//
+//    const size_t line_len = lobe_points[0].size();
+//    for (size_t i = 1; i < line_len; i++) {
+//        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
+//                                                                        lobe_points[0][i],
+//                                                                        lobe_points[0][i - 1]},
+//                                   10., 10.);
+//    }
+//    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
+//                                                                    lobe_points[0][0],
+//                                                                    lobe_points[0][line_len - 1]},
+//                               10., 10.);
+//
+//    const size_t h_len = lobe_points.size() - 1;
+//    for (size_t i = 1; i < line_len; i++) {
+//        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
+//                                                                        lobe_points[h_len][i],
+//                                                                        lobe_points[h_len][i - 1]},
+//                                   10., 10.);
+//    }
+//    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
+//                                                                    lobe_points[h_len][0],
+//                                                                    lobe_points[0][line_len - 1]},
+//                               10., 10.);
+//
+//    for (size_t i = 1; i < (h_len + 1); i++) {
+//        for (size_t j = 1; j < line_len; j++) {
+//            lobe_3d_model.emplace_back(
+//                std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][j - 1],
+//                                                     lobe_points[i - 1][j], lobe_points[i][j - 1]},
+//                10., 10.);
+//            lobe_3d_model.emplace_back(
+//                std::array<std::array<double, 3>, 4>{center, lobe_points[i][j - 1],
+//                                                     lobe_points[i][j], lobe_points[i - 1][j]},
+//                10., 10.);
+//        }
+//
+//        lobe_3d_model.emplace_back(
+//            std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][line_len - 1],
+//                                                 lobe_points[i - 1][0],
+//                                                 lobe_points[i][line_len - 1]},
+//            10., 10.);
+//        lobe_3d_model.emplace_back(
+//            std::array<std::array<double, 3>, 4>{center, lobe_points[i][line_len - 1],
+//                                                 lobe_points[i][0], lobe_points[i - 1][0]},
+//            10., 10.);
+//    }
+//
+//    return lobe_3d_model;
+//}
 
-std::vector<tetra> plane::build3d_model_donor_roche_lobe() {
-    /*
-     * assume that in the beginning roche lobe placed on x axis
-     *
-     * build 3d model and then rotate it
-     */
 
-    double donor_pos_x = 1 - L;
-    double mass_center_pos_x = (donor_pos_x * Md + acc_x0 * Ma) / (Ma + Md);
-    double alpha = Md / (Ma + Md);
-    //    double lagrange1_pos_x = mass_center_pos_x - L * (1 - pow((alpha / 3.), 1. / 3.));
-    //    std::cout << lagrange1_pos_x << std::endl;
+plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d) {
+    if (objects3d.empty()) {
+        _global_boundaries = {1, 0, 1, 0};
+        std::cerr << "warning! empty set of objects to render" << std::endl;
+    } else {
+        _global_boundaries = objects3d.at(0).get_boundaries();
+        _data = objects3d.at(0).get_pointer();
 
-    /*
-     * for some reason defined lagrange_pos_x is another value
-     */
-    double lagrange1_pos_x = 0.35515;
+        const size_t objects3d_size =  objects3d.size();
+        for (size_t i = 1; i < objects3d_size; i++) {
+            auto tmp = objects3d.at(i).get_boundaries();
+            _global_boundaries[0] = std::max(_global_boundaries[0], tmp[0]);
+            _global_boundaries[1] = std::min(_global_boundaries[1], tmp[1]);
+            _global_boundaries[2] = std::max(_global_boundaries[2], tmp[2]);
+            _global_boundaries[3] = std::min(_global_boundaries[3], tmp[3]);
 
-    /*
-     * let norm multiply value by G_SOL
-     * by definition OMEGA is perpendicular to r
-     *
-     * using formula (4) https://arxiv.org/pdf/1702.00587.pdf
-     */
-
-    /*
-     * let's find potential
-     */
-    const double l1_potential =
-        roche_lobe_potential({lagrange1_pos_x, 0, 0}, acc_x0, donor_pos_x, mass_center_pos_x);
-    //    std::cout << l1_potential << std::endl;
-
-    const std::array<double, 3> def_step_vector{0.001, 0, 0};
-
-    double step_angle_x = PI / 256;
-    double step_angle_y = PI / 256;
-
-    double angle_x = 0;
-    double angle_y = -PI + step_angle_y;
-
-    std::array<double, 3> bottom_point{};
-    std::array<double, 3> top_point{};
-
-    {
-        std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
-        std::array<double, 3> step_vector{0, 0, 0.001};
-
-        double f_value{};
-        do {
-            add_vector(point_trace_vec, step_vector);
-            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-        } while (f_value < l1_potential);
-
-        top_point = point_trace_vec;
-        point_trace_vec = {donor_pos_x, 0, 0};
-        step_vector = {0, 0, -0.001};
-
-        do {
-            add_vector(point_trace_vec, step_vector);
-            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-        } while (f_value < l1_potential);
-
-        bottom_point = point_trace_vec;
-    }
-
-    std::vector<std::vector<std::array<double, 3>>> lobe_points{};
-
-    /*
-     * TODO:
-     * 1. resize vectors in tracing
-     * 2. resize lobe 3d model
-     * 3. parallelize algorithm
-     * 4. refactor code (!)
-     * 5. refactor tetra scalar values, implement base class that don't explicitly rely on q and
-     * alpha, implement derivative classes for roche_lobe and star center
-     * 6. implement write 3d model object data back to .vtk (unstructured_grid_tetra)
-     */
-
-    while (angle_y < (PI - step_angle_y + std::numeric_limits<double>::epsilon())) {
-        std::array<double, 3> y_step_vector = rotate_vector_by_z_axis(def_step_vector, angle_y);
-        angle_y += step_angle_y;
-
-        std::vector<std::array<double, 3>> line{};
-        while (angle_x < 2 * PI - step_angle_x + std::numeric_limits<double>::epsilon()) {
-            std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
-            std::array<double, 3> step_vector = rotate_vector_by_y_axis(y_step_vector, angle_x);
-
-            double f_value{};
-            do {
-                add_vector(point_trace_vec, step_vector);
-                f_value =
-                    roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-            } while (f_value < l1_potential);
-
-            line.push_back(point_trace_vec);
-            angle_x += step_angle_x;
+            auto tmp_data = objects3d.at(i).get_pointer();
+            _data->insert(_data->end(), std::make_move_iterator(tmp_data->begin()), std::make_move_iterator(tmp_data->end()));
         }
-
-        lobe_points.push_back(std::move(line));
-        angle_x = 0;
     }
 
-    /*
-     * create vector of tetras of lobe
-     *
-     * main cycle from bottom to top
-     */
+    _x = res_x;
+    _y = res_y;
 
-    const std::array<double, 3> center{donor_pos_x, 0, 0};
-    std::vector<tetra> lobe_3d_model{};
+    double delta_x(_global_boundaries[0] - _global_boundaries[1]);
+    double delta_y(_global_boundaries[2] - _global_boundaries[3]);
 
-    const size_t line_len = lobe_points[0].size();
-    for (size_t i = 1; i < line_len; i++) {
-        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
-                                                                        lobe_points[0][i],
-                                                                        lobe_points[0][i - 1]},
-                                   10., 10.);
-    }
-    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
-                                                                    lobe_points[0][0],
-                                                                    lobe_points[0][line_len - 1]},
-                               10., 10.);
+    _step_x = delta_x / (res_x - 1.);
+    _step_y = delta_y / (res_y - 1.);
 
-    const size_t h_len = lobe_points.size() - 1;
-    for (size_t i = 1; i < line_len; i++) {
-        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
-                                                                        lobe_points[h_len][i],
-                                                                        lobe_points[h_len][i - 1]},
-                                   10., 10.);
-    }
-    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
-                                                                    lobe_points[h_len][0],
-                                                                    lobe_points[0][line_len - 1]},
-                               10., 10.);
-
-    for (size_t i = 1; i < (h_len + 1); i++) {
-        for (size_t j = 1; j < line_len; j++) {
-            lobe_3d_model.emplace_back(
-                std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][j - 1],
-                                                     lobe_points[i - 1][j], lobe_points[i][j - 1]},
-                10., 10.);
-            lobe_3d_model.emplace_back(
-                std::array<std::array<double, 3>, 4>{center, lobe_points[i][j - 1],
-                                                     lobe_points[i][j], lobe_points[i - 1][j]},
-                10., 10.);
+    _lines.resize(res_x);
+    double current_x = _global_boundaries[1]; // x_min
+    for (size_t i = 0; i < res_x; i++) {
+        double current_y = _global_boundaries[3]; // y_min
+        _lines.at(i).reserve(res_y);
+        for (size_t j = 0; j < res_y; j++) {
+            _lines.at(i).push_back(line(current_x, current_y));
+            current_y = current_y + _step_y;
         }
-
-        lobe_3d_model.emplace_back(
-            std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][line_len - 1],
-                                                 lobe_points[i - 1][0],
-                                                 lobe_points[i][line_len - 1]},
-            10., 10.);
-        lobe_3d_model.emplace_back(
-            std::array<std::array<double, 3>, 4>{center, lobe_points[i][line_len - 1],
-                                                 lobe_points[i][0], lobe_points[i - 1][0]},
-            10., 10.);
+        current_x = current_x + _step_x;
     }
-
-    return lobe_3d_model;
 }
