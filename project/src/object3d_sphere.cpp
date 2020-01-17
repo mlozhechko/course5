@@ -14,5 +14,5 @@ object3d_sphere::object3d_sphere(const point& center, double R) {
         return vector_2_norm(internal_point);
     };
 
-    init_polar(sphere_func, center[0], center[1], center[2], R, 0.001, 256, tetra_type::solid, ACC_DISK_COLOR);
+    init_polar(sphere_func, center[0], center[1], center[2], R, 0.001, 256, tetra_type::solid, app::instance().config.acc_disk_solid_color);
 }

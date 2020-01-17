@@ -34,7 +34,7 @@ public:
     std::shared_ptr<std::vector<tetra>> get_pointer();
 
     virtual void rotate_around_x_axis(double angle);
-    virtual void rotate_around_y_axis(double angle, double x0 = 0);
+    virtual void rotate_around_y_axis(double angle, double x0);
     virtual std::array<double, 4> get_boundaries();
 
 protected:

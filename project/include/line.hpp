@@ -81,8 +81,8 @@ private:
     std::vector<std::bitset<32>> _tetra_intersections;
     std::vector<intersection_data> _intersections_delta;
 
-    std::array<std::bitset<32>, AMOUNT_OF_THREADS> buffer_data{};
-    std::array<bool, AMOUNT_OF_THREADS> buffer_flags{};
+    std::array<std::bitset<32>, MAX_NUMBER_OF_THREADS> buffer_data{};
+    std::array<bool, MAX_NUMBER_OF_THREADS> buffer_flags{};
 
     std::mutex _tetra_intersections_mutex;
 

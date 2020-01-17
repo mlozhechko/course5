@@ -44,6 +44,6 @@ object3d_roche_lobe::object3d_roche_lobe(const point& pos_accretor, double dist,
     };
 
     const double lagrange_potential = roche_lobe_potential_func({lagrange1_pos_x, 0, 0});
-    init_polar(roche_lobe_potential_func, donor_pos_x, 0, 0, lagrange_potential, 0.001, 128, tetra_type::solid, ROCHE_LOBE_COLOR);
+    init_polar(roche_lobe_potential_func, donor_pos_x, 0, 0, lagrange_potential, 0.001, 128, tetra_type::solid, app::instance().config.roche_lobe_solid_color);
     rotate_around_y_axis(donor_angle_around_y, ACC_X0);
 }

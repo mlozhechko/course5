@@ -158,8 +158,7 @@ object2d plane::trace_rays(const tetra_value value_alpha, const tetra_value valu
         result_y[i].resize(lines_size_2d);
     }
 
-#pragma omp parallel for default(none) shared(result_x, result_y, _data)                       \
-    num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8) collapse(2)
+#pragma omp parallel for default(none) shared(result_x, result_y, _data) schedule(dynamic, 8) collapse(2)
     for (size_t i = 0; i < lines_size_1d; i++) {
         for (size_t j = 0; j < lines_size_2d; j++) {
             _lines[i][j].calculate_intersections(*_data);
@@ -185,8 +184,7 @@ void plane::print_all_lines_with_intersection() {
 void plane::find_intersections() {
     size_t tetrahedron_vector_size = _data->size();
 
-#pragma omp parallel for default(none) shared(tetrahedron_vector_size, _data)                  \
-    num_threads(AMOUNT_OF_THREADS) schedule(dynamic, 8)
+#pragma omp parallel for default(none) shared(tetrahedron_vector_size, _data) schedule(dynamic, 8)
     for (size_t i = 0; i < tetrahedron_vector_size; i++) {
         int tid = omp_get_thread_num();
         find_intersections_with_tetrahedron((*_data)[i], i, tid);
@@ -194,11 +192,23 @@ void plane::find_intersections() {
 }
 
 double plane::get_pixel_by_x(double x) {
-    return (x - _global_boundaries[1]) / _step_x;
+    double res = (x - _global_boundaries[1]) / _step_x;
+    if (res < 0) {
+        return 0;
+    } else if (res > (static_cast<double>(_x) - 1)) {
+        return static_cast<double>(_x) - 1;
+    }
+    return res;
 }
 
 double plane::get_pixel_by_y(double y) {
-    return (y - _global_boundaries[3]) / _step_y;
+    double res = (y - _global_boundaries[3]) / _step_y;
+    if (res < 0) {
+        return 0;
+    } else if (res > (static_cast<double>(_y) - 1)) {
+        return static_cast<double>(_y) - 1;
+    }
+    return res;
 }
 
 double vector_2_norm(const std::array<double, 3>& vec) {
