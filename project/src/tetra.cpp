@@ -1,22 +1,21 @@
 #include <tetra.hpp>
 
 tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2, tetra_type tmp_tetra_type)
-    : _points(points), _tetra_type(tmp_tetra_type) {
-    _tetra_values[static_cast<size_t>(tetra_value::alpha)] = v1;
-    _tetra_values[static_cast<size_t>(tetra_value::Q)] = v2;
+    : _points(points), _tetra_values({v1, v2}), _tetra_type(tmp_tetra_type) {}
+
+void tetra::rotate_around_x_axis(double angle) {
+    for (auto& i : _points) {
+        point_rotate_around_x_axis(angle, i);
+    }
 }
 
-void tetra::rotate_x(double angle) {
+void tetra::rotate_around_y_axis(double angle, double x0) {
     for (auto& i : _points) {
-        point_rotate_x(angle, i);
+        point_rotate_around_y_axis(angle, i, x0);
     }
 }
 
 std::array<double, 4> tetra::get_boundaries() {
-    /*
-     * TODO:
-     * 1. remove(!)
-     */
     std::array<double, 4> res{};
     res[1] = res[0] = _points[0][0];
     res[3] = res[2] = _points[0][1];
@@ -42,10 +41,24 @@ std::array<double, 4> tetra::get_boundaries() {
     return res;
 }
 
-void tetra::point_rotate_x(double alpha, std::array<double, 3>& point) {
+void tetra::point_rotate_around_x_axis(double alpha, std::array<double, 3>& point) {
     double tmp_point1 = point[1];
     point[1] = point[1] * cos(alpha) - point[2] * sin(alpha);
     point[2] = tmp_point1 * sin(alpha) + point[2] * cos(alpha);
+}
+
+
+void tetra::point_rotate_around_y_axis(double alpha, std::array<double, 3>& point, double x0) {
+    /*
+     * rotate around axis parallel to y that pass (x0, 0, 0) point
+     */
+    point[0] -= x0;
+
+    double tmp_point0 = point[0];
+    point[0] = point[0] * cos(alpha) - point[2] * sin(alpha);
+    point[2] = tmp_point0 * sin(alpha) + point[2] * cos(alpha);
+
+    point[0] += x0;
 }
 
 std::ostream& operator<<(std::ostream& os, const tetra& lt) {

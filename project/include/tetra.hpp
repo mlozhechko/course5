@@ -17,10 +17,8 @@ public:
         return _points[i];
     }
 
-    /*
-     * rotation by angle by y axis
-     */
-    void rotate_x(double angle);
+    void rotate_around_x_axis(double angle);
+    void rotate_around_y_axis(double angle, double x0);
 
     /*
      * get tetrahedrons boundaries
@@ -36,7 +34,9 @@ public:
     double delta_z();
 
 private:
-    static void point_rotate_x(double alpha, std::array<double, 3>& point);
+    static void point_rotate_around_x_axis(double alpha, std::array<double, 3>& point);
+    static void point_rotate_around_y_axis(double alpha, std::array<double, 3>& point, double x0 = 0);
+
     friend std::ostream& operator<<(std::ostream& os, const tetra& lt);
 
     std::array<std::array<double, 3>, 4> _points{};

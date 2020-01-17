@@ -52,17 +52,6 @@ void object3d_base::read_vtk_file(const std::string& filename, const std::vector
     }
 }
 
-/*
- * TODO:
- * 1. resize vectors in tracing
- * 2. resize lobe 3d model
- * 3. parallelize algorithm
- * 4. refactor code (!)
- * 5. refactor tetra scalar values, implement base class that don't explicitly rely on q and
- * alpha, implement derivative classes for roche_lobe and star center
- * 6. implement write 3d model object data back to .vtk (unstructured_grid_tetra)
- */
-
 static std::array<double, 3> rotate_vector_around_y_axis(const std::array<double, 3>& line_vector,
                                                          double alpha) {
     std::array<double, 3> res{};
@@ -215,9 +204,19 @@ void object3d_base::rotate_around_x_axis(double angle) {
 
 #pragma omp parallel for default(none) shared(_data, angle) schedule(dynamic, 8)
     for (size_t i = 0; i < tetra_vec_size; i++) {
-        (*_data)[i].rotate_x(angle);
+        (*_data)[i].rotate_around_x_axis(angle);
     }
 }
+
+void object3d_base::rotate_around_y_axis(double angle, double x0) {
+    const size_t tetra_vec_size = _data->size();
+
+#pragma omp parallel for default(none) shared(_data, angle, x0) schedule(dynamic, 8)
+    for (size_t i = 0; i < tetra_vec_size; i++) {
+        (*_data)[i].rotate_around_y_axis(angle, x0);
+    }
+}
+
 
 std::array<double, 4> object3d_base::get_boundaries() {
     auto pre_tmp = _data->at(0).get_boundaries();

@@ -23,7 +23,6 @@ object3d_roche_lobe::object3d_roche_lobe(const point& pos_accretor, double dist,
     const double mass_center_pos_x = (donor_pos_x * m_donor + pos_accretor[0] * m_accretor) / (m_accretor + m_donor);
     const double alpha = m_donor / (m_accretor + m_donor);
     /* const */ double lagrange1_pos_x = mass_center_pos_x - dist * (1. - pow((alpha / 3.), 1. / 3.));
-    std::cout << lagrange1_pos_x << std::endl;
 
     /*
      * for some reason defined in article lagrange_pos_x is another value
@@ -46,4 +45,5 @@ object3d_roche_lobe::object3d_roche_lobe(const point& pos_accretor, double dist,
 
     const double lagrange_potential = roche_lobe_potential_func({lagrange1_pos_x, 0, 0});
     init_polar(roche_lobe_potential_func, donor_pos_x, 0, 0, lagrange_potential, 0.001, 128, tetra_type::solid, ROCHE_LOBE_COLOR);
+    rotate_around_y_axis(donor_angle_around_y, ACC_X0);
 }

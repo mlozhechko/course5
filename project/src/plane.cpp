@@ -1,30 +1,4 @@
-
-#include <atomic>
 #include <plane.hpp>
-
-//plane::plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries)
-//    : _global_boundaries(global_boundaries) {
-//    _x = res_x;
-//    _y = res_y;
-//
-//    double delta_x(global_boundaries[0] - global_boundaries[1]);
-//    double delta_y(global_boundaries[2] - global_boundaries[3]);
-//
-//    _step_x = delta_x / (res_x - 1.);
-//    _step_y = delta_y / (res_y - 1.);
-//
-//    _lines.resize(res_x);
-//    double current_x = global_boundaries[1]; // x_min
-//    for (size_t i = 0; i < res_x; i++) {
-//        double current_y = global_boundaries[3]; // y_min
-//        _lines.at(i).reserve(res_y);
-//        for (size_t j = 0; j < res_y; j++) {
-//            _lines.at(i).push_back(line(current_x, current_y));
-//            current_y = current_y + _step_y;
-//        }
-//        current_x = current_x + _step_x;
-//    }
-//}
 
 size_t plane::count_all_intersections() {
     size_t sum = 0;
@@ -273,25 +247,39 @@ void add_vector(std::array<double, 3>& arr1, const std::array<double, 3>& arr2) 
     }
 }
 
-plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d) {
-    if (objects3d.empty()) {
-        _global_boundaries = {1, 0, 1, 0};
-        std::cerr << "warning! empty set of objects to render" << std::endl;
-    } else {
-        _global_boundaries = objects3d.at(0).get_boundaries();
-        _data = objects3d.at(0).get_pointer();
+plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d, std::vector<double> global_boundaries) {
+    const size_t gb_size = global_boundaries.size();
+    if ((gb_size > 0) && (gb_size != 4)) {
+        throw std::runtime_error("plane initializer. wrong manual boundaries");
+    }
+    bool is_manual_boundaries = !global_boundaries.empty();
 
-        const size_t objects3d_size =  objects3d.size();
+//    std::cout << "im " << is_manual_boundaries << std::endl;
+
+    if (objects3d.empty()) {
+        throw std::runtime_error("plane initializer. empty set of objects to render");
+    }
+
+    _global_boundaries = objects3d.at(0).get_boundaries();
+    _data = objects3d.at(0).get_pointer();
+
+    const size_t objects3d_size = objects3d.size();
+
+    if (!is_manual_boundaries) {
         for (size_t i = 1; i < objects3d_size; i++) {
             auto tmp = objects3d.at(i).get_boundaries();
             _global_boundaries[0] = std::max(_global_boundaries[0], tmp[0]);
             _global_boundaries[1] = std::min(_global_boundaries[1], tmp[1]);
             _global_boundaries[2] = std::max(_global_boundaries[2], tmp[2]);
             _global_boundaries[3] = std::min(_global_boundaries[3], tmp[3]);
-
-            auto tmp_data = objects3d.at(i).get_pointer();
-            _data->insert(_data->end(), std::make_move_iterator(tmp_data->begin()), std::make_move_iterator(tmp_data->end()));
         }
+    } else {
+        std::copy(global_boundaries.begin(), global_boundaries.end(), _global_boundaries.data());
+    }
+
+    for (size_t i = 1; i < objects3d_size; i++) {
+        auto tmp_data = objects3d.at(i).get_pointer();
+        _data->insert(_data->end(), std::make_move_iterator(tmp_data->begin()), std::make_move_iterator(tmp_data->end()));
     }
 
     _x = res_x;

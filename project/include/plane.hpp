@@ -16,7 +16,7 @@
 class plane {
 public:
     plane() = delete;
-    explicit plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d);
+    explicit plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d, std::vector<double> global_boundaries = {});
     void find_intersections();
 
     /*
