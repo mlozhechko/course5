@@ -27,7 +27,7 @@ const int DELIMITER_POS = 28;
 static std::bitset<32> mask{0x0FFFFFFF};
 
 void line::add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id) {
-    if (_marked_void) {
+    if (_marked_solid) {
         return;
     }
 
@@ -175,7 +175,7 @@ double line::find_polygon_intersection_z(const std::array<double, 3>& p1,
 
 double line::direct_calculate_ray_value(const std::vector<tetra>& tetra_vector,
                                         tetra_value value_signature) {
-    if (_marked_void) {
+    if (_marked_solid) {
         return _mark_value;
     }
 
@@ -194,7 +194,7 @@ double line::direct_calculate_ray_value(const std::vector<tetra>& tetra_vector,
 
 double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
                                       tetra_value alpha_signature, tetra_value q_signature) {
-    if (_marked_void) {
+    if (_marked_solid) {
         return _mark_value;
     }
 
@@ -234,7 +234,7 @@ void line::free_memory() {
     std::vector<intersection_data>().swap(_intersections_delta);
 }
 
-void line::mark_void(double mark_value) {
-    _marked_void = true;
+void line::mark_solid_color(double mark_value) {
+    _marked_solid = true;
     _mark_value = mark_value;
 }

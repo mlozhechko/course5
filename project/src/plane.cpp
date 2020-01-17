@@ -46,15 +46,21 @@ size_t plane::find_intersections_with_tetrahedron(const tetra& tetra, size_t id,
      * 1000 1, 2, 3 points
      */
 
+    const bool is_solid = (tetra.get_tetra_type() == tetra_type::solid);
+    double solid_color{};
+    if (is_solid) {
+        solid_color = tetra.access_value(tetra_value::solid_color);
+    }
+
     size_t sum(0);
     sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[2].data()}, id,
-                                           0, internal_thread_id);
+                                           0, internal_thread_id, is_solid, solid_color);
     sum += find_intersections_with_polygon({tetra[0].data(), tetra[1].data(), tetra[3].data()}, id,
-                                           1, internal_thread_id);
+                                           1, internal_thread_id, is_solid, solid_color);
     sum += find_intersections_with_polygon({tetra[0].data(), tetra[2].data(), tetra[3].data()}, id,
-                                           2, internal_thread_id);
+                                           2, internal_thread_id, is_solid, solid_color);
     sum += find_intersections_with_polygon({tetra[1].data(), tetra[2].data(), tetra[3].data()}, id,
-                                           3, internal_thread_id);
+                                           3, internal_thread_id, is_solid, solid_color);
 
     if (sum % 2 == 1) {
         throw std::runtime_error("critical error. odd number of intersections");
@@ -68,11 +74,14 @@ double plane::line_common_eq(const double* p1, const double* p2, const double* p
 }
 
 double plane::line_rev_function_eq(const double* p1, const double* p2, double y) {
+    if (fabs(p1[1] - p2[1]) < std::numeric_limits<double>::epsilon()) {
+        return p1[0];
+    }
     return (p1[0] - p2[0]) * (y - p1[1]) / (p1[1] - p2[1]) + p1[0];
 }
 
-size_t plane::find_intersections_with_polygon(std::array<const double*, 3> points, size_t id,
-                                              size_t polygon_id, int internal_thread_id) {
+size_t plane::find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id,
+                                              int internal_thread_id, bool is_solid, double solid_color) {
     size_t counter(0);
 
     std::sort(points.begin(), points.end(), [](auto& a, auto& b) { return a[1] > b[1]; });
@@ -144,7 +153,11 @@ size_t plane::find_intersections_with_polygon(std::array<const double*, 3> point
         const size_t x_min_index = std::ceil(get_pixel_by_x(x_min));
 
         for (size_t i = x_min_index; i <= x_max_index; i++) {
-            _lines[i][y_index_it].add_tetra_intersection(id, polygon_id, internal_thread_id);
+            if (is_solid) {
+                _lines[i][y_index_it].mark_solid_color(solid_color);
+            } else {
+                _lines[i][y_index_it].add_tetra_intersection(id, polygon_id, internal_thread_id);
+            }
             counter++;
         }
 
@@ -206,35 +219,6 @@ void plane::find_intersections() {
     }
 }
 
-/*
- * accretion disk is sphere
- *
- * equation: (x - x0)^2 + (y - y0)^2 == acc_r^2
- */
-//void plane::mark_accretion_disk_space() {
-//    const size_t y_max_index = std::floor(get_pixel_by_y(acc_y0 + acc_r));
-//    const size_t y_min_index = std::ceil(get_pixel_by_y(acc_y0 - acc_r));
-//    double current_y_it = acc_y0 - acc_r;
-//
-//    for (size_t y_it = y_min_index; y_it <= y_max_index; y_it++) {
-//        /* xp = (x - x0) = sqrt(acc_r^2 - (y - y0)^2) */
-//        double yp = (current_y_it - acc_y0);
-//        double xp = sqrt(acc_r * acc_r - yp * yp);
-//
-//        double x_max_it = xp + acc_x0;
-//        double x_min_it = acc_x0 - xp;
-//
-//        const size_t x_max_index = std::floor(get_pixel_by_x(x_max_it));
-//        const size_t x_min_index = std::ceil(get_pixel_by_x(x_min_it));
-//
-//        for (size_t x_it = x_min_index; x_it <= x_max_index; x_it++) {
-//            _lines[x_it][y_it].mark_void(marked_accretor_value);
-//        }
-//
-//        current_y_it += _step_y;
-//    }
-//}
-
 double plane::get_pixel_by_x(double x) {
     return (x - _global_boundaries[1]) / _step_x;
 }
@@ -261,23 +245,8 @@ std::array<double, 3> vector_multiplication(const std::array<double, 3>& m1,
     return res;
 }
 
-double roche_lobe_potential(const std::array<double, 3>& r, double acc_x, double donor_x,
-                            double mc_x) {
-    double acc_denominator = vector_2_norm({r[0] - acc_x, r[1], r[2]});
-    //    std::cout << "acc denominator: " << acc_denominator << std::endl;
-    double donor_denominator = vector_2_norm({r[0] - donor_x, r[1], r[2]});
-    //    std::cout << "donor denominator: " << donor_denominator << std::endl;
-    double tmp_omega_mult =
-        vector_2_norm(vector_multiplication({r[0] - mc_x, r[1], r[2]}, {0, OMEGA, 0}));
-    double omega = (1. / 2.) * tmp_omega_mult * tmp_omega_mult;
-    //    std::cout << "omega: " << omega << std::endl;
-
-    double F = -((G_SOL * Ma) / acc_denominator) - ((G_SOL * Md) / donor_denominator) - omega;
-    return F;
-}
-
-std::array<double, 3> rotate_vector_by_y_axis(const std::array<double, 3>& line_vector,
-                                              double alpha) {
+std::array<double, 3> rotate_vector_around_y_axis(const std::array<double, 3>& line_vector,
+                                                  double alpha) {
     std::array<double, 3> res{};
     //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[2] * sin(alpha);
@@ -287,8 +256,8 @@ std::array<double, 3> rotate_vector_by_y_axis(const std::array<double, 3>& line_
     return res;
 }
 
-std::array<double, 3> rotate_vector_by_z_axis(const std::array<double, 3>& line_vector,
-                                              double alpha) {
+std::array<double, 3> rotate_vector_around_z_axis(const std::array<double, 3>& line_vector,
+                                                  double alpha) {
     std::array<double, 3> res{};
     //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[1] * sin(alpha);
@@ -303,173 +272,6 @@ void add_vector(std::array<double, 3>& arr1, const std::array<double, 3>& arr2) 
         arr1[i] += arr2[i];
     }
 }
-
-void print_vector(const std::array<double, 3>& vec) {
-    std::cout << "(" << vec[0] << "," /* << vec[1] << " "*/ << vec[2] << ")" << std::endl;
-}
-//
-//
-//std::vector<tetra> plane::build3d_model_donor_roche_lobe() {
-//    /*
-//     * assume that in the beginning roche lobe placed on x axis
-//     *
-//     * build 3d model and then rotate it
-//     */
-//
-//    double donor_pos_x = 1 - L;
-//    double mass_center_pos_x = (donor_pos_x * Md + acc_x0 * Ma) / (Ma + Md);
-//    double alpha = Md / (Ma + Md);
-//    //    double lagrange1_pos_x = mass_center_pos_x - L * (1 - pow((alpha / 3.), 1. / 3.));
-//    //    std::cout << lagrange1_pos_x << std::endl;
-//
-//    /*
-//     * for some reason defined lagrange_pos_x is another value
-//     */
-//    double lagrange1_pos_x = 0.35515;
-//
-//    /*
-//     * let norm multiply value by G_SOL
-//     * by definition OMEGA is perpendicular to r
-//     *
-//     * using formula (4) https://arxiv.org/pdf/1702.00587.pdf
-//     */
-//
-//    /*
-//     * let's find potential
-//     */
-//    const double l1_potential =
-//        roche_lobe_potential({lagrange1_pos_x, 0, 0}, acc_x0, donor_pos_x, mass_center_pos_x);
-//    //    std::cout << l1_potential << std::endl;
-//
-//    const std::array<double, 3> def_step_vector{0.001, 0, 0};
-//
-//    double step_angle_x = PI / 256;
-//    double step_angle_y = PI / 256;
-//
-//    double angle_x = 0;
-//    double angle_y = -PI + step_angle_y;
-//
-//    std::array<double, 3> bottom_point{};
-//    std::array<double, 3> top_point{};
-//
-//    {
-//        std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
-//        std::array<double, 3> step_vector{0, 0, 0.001};
-//
-//        double f_value{};
-//        do {
-//            add_vector(point_trace_vec, step_vector);
-//            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-//        } while (f_value < l1_potential);
-//
-//        top_point = point_trace_vec;
-//        point_trace_vec = {donor_pos_x, 0, 0};
-//        step_vector = {0, 0, -0.001};
-//
-//        do {
-//            add_vector(point_trace_vec, step_vector);
-//            f_value = roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-//        } while (f_value < l1_potential);
-//
-//        bottom_point = point_trace_vec;
-//    }
-//
-//    std::vector<std::vector<std::array<double, 3>>> lobe_points{};
-//
-//    /*
-//     * TODO:
-//     * 1. resize vectors in tracing
-//     * 2. resize lobe 3d model
-//     * 3. parallelize algorithm
-//     * 4. refactor code (!)
-//     * 5. refactor tetra scalar values, implement base class that don't explicitly rely on q and
-//     * alpha, implement derivative classes for roche_lobe and star center
-//     * 6. implement write 3d model object data back to .vtk (unstructured_grid_tetra)
-//     */
-//
-//    while (angle_y < (PI - step_angle_y + std::numeric_limits<double>::epsilon())) {
-//        std::array<double, 3> y_step_vector = rotate_vector_by_z_axis(def_step_vector, angle_y);
-//        angle_y += step_angle_y;
-//
-//        std::vector<std::array<double, 3>> line{};
-//        while (angle_x < 2 * PI - step_angle_x + std::numeric_limits<double>::epsilon()) {
-//            std::array<double, 3> point_trace_vec{donor_pos_x, 0, 0};
-//            std::array<double, 3> step_vector = rotate_vector_by_y_axis(y_step_vector, angle_x);
-//
-//            double f_value{};
-//            do {
-//                add_vector(point_trace_vec, step_vector);
-//                f_value =
-//                    roche_lobe_potential(point_trace_vec, acc_x0, donor_pos_x, mass_center_pos_x);
-//            } while (f_value < l1_potential);
-//
-//            line.push_back(point_trace_vec);
-//            angle_x += step_angle_x;
-//        }
-//
-//        lobe_points.push_back(std::move(line));
-//        angle_x = 0;
-//    }
-//
-//    /*
-//     * create vector of tetras of lobe
-//     *
-//     * main cycle from bottom to top
-//     */
-//
-//    const std::array<double, 3> center{donor_pos_x, 0, 0};
-//    std::vector<tetra> lobe_3d_model{};
-//
-//    const size_t line_len = lobe_points[0].size();
-//    for (size_t i = 1; i < line_len; i++) {
-//        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
-//                                                                        lobe_points[0][i],
-//                                                                        lobe_points[0][i - 1]},
-//                                   10., 10.);
-//    }
-//    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, bottom_point,
-//                                                                    lobe_points[0][0],
-//                                                                    lobe_points[0][line_len - 1]},
-//                               10., 10.);
-//
-//    const size_t h_len = lobe_points.size() - 1;
-//    for (size_t i = 1; i < line_len; i++) {
-//        lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
-//                                                                        lobe_points[h_len][i],
-//                                                                        lobe_points[h_len][i - 1]},
-//                                   10., 10.);
-//    }
-//    lobe_3d_model.emplace_back(std::array<std::array<double, 3>, 4>{center, top_point,
-//                                                                    lobe_points[h_len][0],
-//                                                                    lobe_points[0][line_len - 1]},
-//                               10., 10.);
-//
-//    for (size_t i = 1; i < (h_len + 1); i++) {
-//        for (size_t j = 1; j < line_len; j++) {
-//            lobe_3d_model.emplace_back(
-//                std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][j - 1],
-//                                                     lobe_points[i - 1][j], lobe_points[i][j - 1]},
-//                10., 10.);
-//            lobe_3d_model.emplace_back(
-//                std::array<std::array<double, 3>, 4>{center, lobe_points[i][j - 1],
-//                                                     lobe_points[i][j], lobe_points[i - 1][j]},
-//                10., 10.);
-//        }
-//
-//        lobe_3d_model.emplace_back(
-//            std::array<std::array<double, 3>, 4>{center, lobe_points[i - 1][line_len - 1],
-//                                                 lobe_points[i - 1][0],
-//                                                 lobe_points[i][line_len - 1]},
-//            10., 10.);
-//        lobe_3d_model.emplace_back(
-//            std::array<std::array<double, 3>, 4>{center, lobe_points[i][line_len - 1],
-//                                                 lobe_points[i][0], lobe_points[i - 1][0]},
-//            10., 10.);
-//    }
-//
-//    return lobe_3d_model;
-//}
-
 
 plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d) {
     if (objects3d.empty()) {
@@ -512,4 +314,12 @@ plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d) {
         }
         current_x = current_x + _step_x;
     }
+}
+
+size_t plane::get_x() const {
+    return _x;
+}
+
+size_t plane::get_y() const {
+    return _y;
 }

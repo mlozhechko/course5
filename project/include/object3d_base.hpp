@@ -17,6 +17,8 @@
 /*
  * 3d object consists of tetra
  */
+using point = std::array<double, 3>;
+
 class object3d_base {
 public:
     object3d_base() = default;
@@ -24,8 +26,9 @@ public:
 
     void read_vtk_file(const std::string& filename, const std::vector<std::string>& scalar_labels);
     //virtual void write_to_vtk_file();
-    void init_polar(const std::function<double(std::array<double, 3>)>& potential_function, double x0, double y0,
-                    double z0, double level_value, double step, double angle_step);
+    void
+    init_polar(const std::function<double(std::array<double, 3>)>& potential_function, double x0, double y0, double z0,
+               double level_value, double step, double angle_step, tetra_type arg_tetra_type = tetra_type::transparent, double tetra_v1 = 0, double tetra_v2 = 0);
 
     std::shared_ptr<std::vector<tetra>> get_pointer();
 

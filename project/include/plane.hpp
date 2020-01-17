@@ -15,39 +15,28 @@
 
 class plane {
 public:
-    plane() = default;
-//    explicit plane(size_t res_x, size_t res_y, const std::array<double, 4>& global_boundaries);
+    plane() = delete;
     explicit plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d);
-
-//    void mark_accretion_disk_space();
-//    std::vector<tetra> build3d_model_donor_roche_lobe();
-
     void find_intersections();
 
     /*
-     * trace_all rays and write result of tracing to 2 float matrices
+     * trace_all rays and write result to object2d
      */
 
-    object2d trace_rays(const tetra_value value_alpha, const tetra_value value_Q);
+    object2d trace_rays(tetra_value value_alpha, tetra_value value_Q);
 
     size_t count_all_intersections();
 
-    size_t get_x() {
-        return _x;
-    }
-
-    size_t get_y() {
-        return _y;
-    }
+    size_t get_x() const;
+    size_t get_y() const;
 
     /*
-     * debug
+     * debug features:
      */
     void print_all_lines_with_intersection();
 
 private:
     double get_pixel_by_x(double x);
-
     double get_pixel_by_y(double y);
 
     /*
@@ -62,8 +51,8 @@ private:
     static double line_common_eq(const double* p1, const double* p2, const double* pos);
     static double line_rev_function_eq(const double* p1, const double* p2, double y);
 
-    size_t find_intersections_with_polygon(std::array<const double*, 3> points, size_t id,
-                                           size_t polygon_id, int internal_thread_id);
+    size_t find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id,
+                                           int internal_thread_id, bool is_solid = false, double solid_color = 0);
 
     std::shared_ptr<std::vector<tetra>> _data{};
 

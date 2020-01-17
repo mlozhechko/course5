@@ -1,7 +1,7 @@
 #include <tetra.hpp>
 
-tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2)
-    : _points(points) {
+tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2, tetra_type tmp_tetra_type)
+    : _points(points), _tetra_type(tmp_tetra_type) {
     _tetra_values[static_cast<size_t>(tetra_value::alpha)] = v1;
     _tetra_values[static_cast<size_t>(tetra_value::Q)] = v2;
 }
@@ -71,4 +71,8 @@ double tetra::delta_z() {
 
 double tetra::access_value(tetra_value value) const {
     return _tetra_values[static_cast<size_t>(value)];
+}
+
+tetra_type tetra::get_tetra_type() const {
+    return _tetra_type;
 }

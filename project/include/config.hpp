@@ -2,7 +2,8 @@
 
 const int AMOUNT_OF_THREADS = 16;
 const double PI = 3.14159265358979323846;
-const double marked_accretor_value = std::numeric_limits<double>::quiet_NaN();
+const double ACC_DISK_COLOR = std::numeric_limits<double>::quiet_NaN();
+const double ROCHE_LOBE_COLOR = std::numeric_limits<double>::quiet_NaN();
 
 /*
  * TODO:
@@ -11,15 +12,15 @@ const double marked_accretor_value = std::numeric_limits<double>::quiet_NaN();
 const double L = 0.945;
 
 // accretor properties
-const double acc_x0 = 1;
-const double acc_y0 = 0;
-const double acc_z0 = 0;
+const double ACC_X0 = 1;
+const double ACC_Y0 = 0;
+const double ACC_Z0 = 0;
 
-const double acc_r = 0.02;
-const double Ma = 0.73;
+const double ACC_DISK_R = 0.02;
+const double M_ACC = 0.73;
 
 // donor properties
-const double Md = 0.1;
+const double M_DONOR = 0.1;
 
 /*
  * for Sol mass

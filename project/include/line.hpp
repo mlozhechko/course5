@@ -31,7 +31,7 @@ public:
     double x() const;
     double y() const;
 
-    void mark_void(double mark_value);
+    void mark_solid_color(double mark_value);
 
     void add_tetra_intersection(size_t id, size_t polygon_id, int internal_thread_id);
     size_t number_of_intersections();
@@ -86,6 +86,6 @@ private:
 
     std::mutex _tetra_intersections_mutex;
 
-    bool _marked_void{false};
+    bool _marked_solid{false};
     double _mark_value{};
 };
