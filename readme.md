@@ -19,15 +19,20 @@ Run:
 ```
 ./course --help
 Allowed options:
-  -h [ --help ]                     produce help message
-  -f [ --file ] arg                 source file
-  -d [ --destination ] arg          destination file
-  -j [ --threads ] arg              number of parallel threads
-  -x [ --resolution_x ] arg (=1200) set x axis resolution
-  -y [ --resolution_y ] arg (=900)  set y axis resolution
-  -X [ --angle_around_x ] arg (=0)  rotate view plane by angle around x axis
-  -Y [ --angle_around_y ] arg (=0)  rotate view plane by angle around y axis
-  -D [ --donor_angle ] arg (=0)     initial donor angle around y axis
+  -h [ --help ]                         produce help message
+  -f [ --file ] arg                     source file
+  -d [ --destination ] arg              destination file
+  -j [ --threads ] arg                  number of parallel threads
+  -x [ --resolution_x ] arg (=1200)     set x axis resolution
+  -y [ --resolution_y ] arg (=900)      set y axis resolution
+  -X [ --angle_around_x ] arg (=0)      rotate view plane by angle around x 
+                                        axis
+  -Y [ --angle_around_y ] arg (=0)      rotate view plane by angle around y 
+                                        axis
+  -D [ --donor_angle ] arg (=0)         initial donor angle around y axis
+  -I [ --initial system angle ] arg (=0)
+                                        initial angle of system y axis
+
 ```
 For example
 ```

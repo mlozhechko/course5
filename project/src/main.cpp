@@ -28,7 +28,8 @@ bool program_options(int argc, char **argv) {
         ("resolution_y,y", po::value<size_t>()->default_value(900), "set y axis resolution")
         ("angle_around_x,X", po::value<double>()->default_value(0.), "rotate view plane by angle around x axis")
         ("angle_around_y,Y", po::value<double>()->default_value(0.), "rotate view plane by angle around y axis")
-        ("donor_angle,D", po::value<double>()->default_value(0.), "initial donor angle around y axis");
+        ("donor_angle,D", po::value<double>()->default_value(0.), "initial donor angle around y axis")
+        ("initial system angle,I", po::value<double>()->default_value(0.), "initial angle of system y axis");
 
     po::variables_map vm;
     store(parse_command_line(argc, argv, desc), vm);
@@ -60,6 +61,7 @@ bool program_options(int argc, char **argv) {
     config.angle_around_x = vm["angle_around_x"].as<double>();
     config.angle_around_y = vm["angle_around_y"].as<double>();
     config.donor_angle = vm["donor_angle"].as<double>();
+    config.system_initial_angle_around_y = vm["initial system angle"].as<double>();
 
     return is_ready;
 }
@@ -84,9 +86,11 @@ int main(int argc, char** argv) {
     std::cout << "Initial rotate angle of roche lobe: " << config.donor_angle << " Pi" << std::endl;
     std::cout << "Plane angle around x: " << config.angle_around_x << " Pi" << std::endl;
     std::cout << "Plane angle around y: " << config.angle_around_y << " Pi" << std::endl;
+    std::cout << "Initial system angle around y: " << config.system_initial_angle_around_y << " Pi" << std::endl;
     omp_set_num_threads(config.threads / 2);
 
     auto t1 = timestamp();
+    const double make_perpendicular_to_y_angle = -config.system_initial_angle_around_y * PI + PI / 2.;
     object3d_accretion_disk acc_disk{};
     std::thread acc_t([&]() {
         /*
@@ -95,13 +99,16 @@ int main(int argc, char** argv) {
          */
 
         acc_disk = object3d_accretion_disk{config.file};
-        acc_disk.rotate_around_x_axis(config.angle_around_x * PI);
+        acc_disk.rotate_around_x_axis(make_perpendicular_to_y_angle);
         acc_disk.rotate_around_y_axis(config.angle_around_y * PI, ACC_X0);
+        acc_disk.rotate_around_x_axis(-make_perpendicular_to_y_angle + config.angle_around_x * PI);
     });
 
     auto roche_lobe = object3d_roche_lobe{{ACC_X0, ACC_Y0, ACC_Z0}, L, config.donor_angle * PI, M_ACC, M_DONOR, OMEGA};
-    roche_lobe.rotate_around_x_axis(config.angle_around_x * PI);
+
+    roche_lobe.rotate_around_x_axis(make_perpendicular_to_y_angle);
     roche_lobe.rotate_around_y_axis(config.angle_around_y * PI, ACC_X0);
+    roche_lobe.rotate_around_x_axis(-make_perpendicular_to_y_angle + config.angle_around_x * PI);
 
     auto acc_sphere = object3d_sphere{{ACC_X0, ACC_Y0, ACC_Z0}, ACC_DISK_R};
     acc_t.join();

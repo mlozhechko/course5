@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 project(course)
 
 set(CMAKE_CXX_STANDARD 17)
-if(LINUX)
+if(UNIX AND NOT APPLE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp")
 endif()
 
