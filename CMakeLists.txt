@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 3.11)
 project(course)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp")
+if(UNIX AND NOT APPLE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fopenmp")
+endif()
+
+if(APPLE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -Xpreprocessor -fopenmp")
+        set(CMAKE_EXE_LINKER_FLAGS "-I /usr/local/include -L/usr/local/lib -lomp")
+endif()
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})

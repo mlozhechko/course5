@@ -1,3 +1,5 @@
 *cmake-build-debug*
 *.idea*
-test2.vtk
+*.vtk
+*.vti
+./utility/images*
