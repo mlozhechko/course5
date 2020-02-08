@@ -201,12 +201,21 @@ double line::integrate_ray_value_by_i(const std::vector<tetra>& tetra_vector,
     double I = 0;
     const auto length = static_cast<ssize_t>(_tetra_intersections.size());
 
+    const double limit_alpha = app::instance().config.limit_alpha_value;
+
     for (ssize_t i = length - 1; i >= 0; i--) {
         size_t tetra_id = _intersections_delta[i].tetra_id;
         double delta = _intersections_delta[i].delta_z;
 
         double Q = tetra_vector[tetra_id].access_value(q_signature);
         double alpha = tetra_vector[tetra_id].access_value(alpha_signature);
+
+        /*
+         * stub to limit huge alpha values raising artifacts
+         */
+        if (alpha > limit_alpha) {
+            alpha = limit_alpha;
+        }
 
         double C = Q - alpha * I;
         if (alpha < std::numeric_limits<double>::epsilon()) {

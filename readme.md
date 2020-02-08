@@ -19,24 +19,25 @@ Run:
 ```
 ./course --help
 Allowed options:
-  -h [ --help ]                         produce help message
-  -f [ --file ] arg                     source file
-  -d [ --destination ] arg              destination file
-  -j [ --threads ] arg                  number of parallel threads
-  -x [ --resolution_x ] arg (=1200)     set x axis resolution
-  -y [ --resolution_y ] arg (=900)      set y axis resolution
-  -X [ --angle_around_x ] arg (=0)      rotate view plane by angle around x 
-                                        axis
-  -Y [ --angle_around_y ] arg (=0)      rotate view plane by angle around y 
-                                        axis
-  -D [ --donor_angle ] arg (=0)         initial donor angle around y axis
-  -I [ --initial system angle ] arg (=0)
-                                        initial angle of system y axis
+  -h [ --help ]                          produce help message
+  -f [ --file ] arg                      source file
+  -d [ --destination ] arg               destination file
+  -j [ --threads ] arg                   number of parallel threads
+  -x [ --resolution_x ] arg (=1200)      set x axis resolution
+  -y [ --resolution_y ] arg (=900)       set y axis resolution
+  -X [ --angle_around_x ] arg (=0)       rotate view plane by angle around x 
+                                         axis
+  -Y [ --angle_around_y ] arg (=0)       rotate view plane by angle around y 
+                                         axis
+  -D [ --donor_angle ] arg (=0)          initial donor angle around y axis
+  -I [ --initial_system_angle ] arg (=0) initial angle of system y axis
+  --alpha_limit arg (=2.5)               limit alpha value
+
 
 ```
 For example
 ```
-./course -f filename.vtk -d result.vti -j16 -x 2400 -y 1800
+./course -f filename.vtk -d result.vti -j16 -x 2400 -y 1800 --alpha_limit 3.0 -X 0.5
 ```
 
 Known problems:

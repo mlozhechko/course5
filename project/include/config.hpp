@@ -22,6 +22,7 @@ public:
         double angle_around_y = 0;
         double donor_angle = 0;
         double system_initial_angle_around_y = 0;
+        double limit_alpha_value = 2.5;
         double acc_disk_solid_color = std::numeric_limits<double>::quiet_NaN();
         double roche_lobe_solid_color = std::numeric_limits<double>::quiet_NaN();
     } config{};
