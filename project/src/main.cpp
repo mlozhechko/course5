@@ -29,7 +29,8 @@ bool program_options(int argc, char **argv) {
         ("angle_around_x,X", po::value<double>()->default_value(0.), "rotate view plane by angle around x axis")
         ("angle_around_y,Y", po::value<double>()->default_value(0.), "rotate view plane by angle around y axis")
         ("donor_angle,D", po::value<double>()->default_value(0.), "initial donor angle around y axis")
-        ("initial system angle,I", po::value<double>()->default_value(0.), "initial angle of system y axis");
+        ("initial_system_angle,I", po::value<double>()->default_value(0.), "initial angle of system y axis")
+        ("alpha_limit", po::value<double>()->default_value(2.5), "limit alpha value");
 
     po::variables_map vm;
     store(parse_command_line(argc, argv, desc), vm);
@@ -61,7 +62,8 @@ bool program_options(int argc, char **argv) {
     config.angle_around_x = vm["angle_around_x"].as<double>();
     config.angle_around_y = vm["angle_around_y"].as<double>();
     config.donor_angle = vm["donor_angle"].as<double>();
-    config.system_initial_angle_around_y = vm["initial system angle"].as<double>();
+    config.system_initial_angle_around_y = vm["initial_system_angle"].as<double>();
+    config.limit_alpha_value = vm["alpha_limit"].as<double>();
 
     return is_ready;
 }
@@ -87,6 +89,7 @@ int main(int argc, char** argv) {
     std::cout << "Plane angle around x: " << config.angle_around_x << " Pi" << std::endl;
     std::cout << "Plane angle around y: " << config.angle_around_y << " Pi" << std::endl;
     std::cout << "Initial system angle around y: " << config.system_initial_angle_around_y << " Pi" << std::endl;
+    std::cout << "Limit alpha value: " << config.limit_alpha_value << std::endl;
     omp_set_num_threads(config.threads / 2);
 
     auto t1 = timestamp();
