@@ -6,17 +6,15 @@ static vtkSmartPointer<vtkUnstructuredGrid> init_vtk_grid(const std::string& fil
     reader->SetReadAllScalars(true);
     reader->Update();
 
-    //    reader->Print(std::cout);
     return reader->GetOutput();
 }
 
-void object3d_base::read_vtk_file(const std::string& filename, const std::vector<std::string>& scalar_labels) {
+void object3d_base::read_vtk_file(const std::string& filename,
+                                  const std::vector<std::string>& scalar_labels) {
     vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid{init_vtk_grid(filename)};
     vtkSmartPointer<vtkCellData> scalar_data = unstructured_grid->GetCellData();
 
     size_t number_of_cells = unstructured_grid->GetNumberOfCells();
-
-    //    scalar_data->Print(std::cout);
 
     std::array<vtkSmartPointer<vtkDataArray>, 2> scalars{};
     const size_t amount_of_scalars = scalar_labels.size();
@@ -24,8 +22,6 @@ void object3d_base::read_vtk_file(const std::string& filename, const std::vector
     for (size_t i = 0; i < amount_of_scalars; i++) {
         scalars[i] = scalar_data->GetScalars(scalar_labels[i].data());
     }
-//    vtkSmartPointer<vtkDataArray> scalars_alpha = scalar_data->GetScalars("AbsorpCoef");
-//    vtkSmartPointer<vtkDataArray> scalars_q = scalar_data->GetScalars("radEnLooseRate");
 
     _data->reserve(number_of_cells);
 
@@ -45,8 +41,7 @@ void object3d_base::read_vtk_file(const std::string& filename, const std::vector
         for (size_t i = 0; i < amount_of_scalars; i++) {
             scalar_values[i] = *(scalars[i]->GetTuple(k));
         }
-//        double* tmp_q = scalars_q->GetTuple(k);
-//        double* tmp_alpha = scalars_alpha->GetTuple(k);
+
         tetra im(tmp_points, scalar_values[0], scalar_values[1], tetra_type::transparent);
         _data->push_back(im);
     }
@@ -55,7 +50,6 @@ void object3d_base::read_vtk_file(const std::string& filename, const std::vector
 static std::array<double, 3> rotate_vector_around_y_axis(const std::array<double, 3>& line_vector,
                                                          double alpha) {
     std::array<double, 3> res{};
-    //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[2] * sin(alpha);
     res[1] = line_vector[1];
     res[2] = -line_vector[0] * sin(alpha) + line_vector[2] * cos(alpha);
@@ -66,7 +60,6 @@ static std::array<double, 3> rotate_vector_around_y_axis(const std::array<double
 static std::array<double, 3> rotate_vector_around_z_axis(const std::array<double, 3>& line_vector,
                                                          double alpha) {
     std::array<double, 3> res{};
-    //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[1] * sin(alpha);
     res[1] = -line_vector[0] * sin(alpha) + line_vector[1] * cos(alpha);
     res[2] = line_vector[2];
@@ -80,10 +73,10 @@ static void add_vector(std::array<double, 3>& arr1, const std::array<double, 3>&
     }
 }
 
-void
-object3d_base::init_polar(const std::function<double(std::array<double, 3>)>& potential_function, double x0, double y0,
-                          double z0,
-                          double level_value, double step, double angle_step, tetra_type arg_tetra_type, double tetra_v1, double tetra_v2) {
+void object3d_base::init_polar(
+    const std::function<double(std::array<double, 3>)>& potential_function, double x0, double y0,
+    double z0, double level_value, double step, double angle_step, tetra_type arg_tetra_type,
+    double tetra_v1, double tetra_v2) {
     const std::array<double, 3> def_step_vector{0.001, 0, 0};
 
     double step_angle_x = PI / angle_step;
@@ -102,7 +95,8 @@ object3d_base::init_polar(const std::function<double(std::array<double, 3>)>& po
         double f_value{};
         do {
             add_vector(point_trace_vec, step_vector);
-//            f_value = roche_lobe_potential(point_trace_vec, ACC_X0, donor_pos_x, mass_center_pos_x);
+            //            f_value = roche_lobe_potential(point_trace_vec, ACC_X0, donor_pos_x,
+            //            mass_center_pos_x);
             f_value = potential_function(point_trace_vec);
         } while (f_value < level_value);
 
@@ -154,41 +148,43 @@ object3d_base::init_polar(const std::function<double(std::array<double, 3>)>& po
 
     const size_t line_len = polar_points[0].size();
     for (size_t i = 1; i < line_len; i++) {
-        std::array<std::array<double, 3>, 4> points_bot{center, bottom_point, polar_points[0][i], polar_points[0][i - 1]};
-        object3d_data.emplace_back(points_bot, tetra_v1, tetra_v2,  arg_tetra_type);
+        std::array<std::array<double, 3>, 4> points_bot{center, bottom_point, polar_points[0][i],
+                                                        polar_points[0][i - 1]};
+        object3d_data.emplace_back(points_bot, tetra_v1, tetra_v2, arg_tetra_type);
     }
-    std::array<std::array<double, 3>, 4> points_bot{center, bottom_point, polar_points[0][0], polar_points[0][line_len - 1]};
-    object3d_data.emplace_back(points_bot, tetra_v1, tetra_v2,  arg_tetra_type);
+    std::array<std::array<double, 3>, 4> points_bot{center, bottom_point, polar_points[0][0],
+                                                    polar_points[0][line_len - 1]};
+    object3d_data.emplace_back(points_bot, tetra_v1, tetra_v2, arg_tetra_type);
 
     const size_t h_len = polar_points.size() - 1;
     for (size_t i = 1; i < line_len; i++) {
-        std::array<std::array<double, 3>, 4> points_top{center, top_point,
-                                                        polar_points[h_len][i],
+        std::array<std::array<double, 3>, 4> points_top{center, top_point, polar_points[h_len][i],
                                                         polar_points[h_len][i - 1]};
-        object3d_data.emplace_back(points_top, tetra_v1, tetra_v2,  arg_tetra_type);
+        object3d_data.emplace_back(points_top, tetra_v1, tetra_v2, arg_tetra_type);
     }
 
-    std::array<std::array<double, 3>, 4> points_top{center, top_point,
-                                         polar_points[h_len][0],
-                                         polar_points[0][line_len - 1]};
-    object3d_data.emplace_back(points_top, tetra_v1, tetra_v2,  arg_tetra_type);
+    std::array<std::array<double, 3>, 4> points_top{center, top_point, polar_points[h_len][0],
+                                                    polar_points[0][line_len - 1]};
+    object3d_data.emplace_back(points_top, tetra_v1, tetra_v2, arg_tetra_type);
 
     for (size_t i = 1; i < (h_len + 1); i++) {
         for (size_t j = 1; j < line_len; j++) {
-            std::array<std::array<double, 3>, 4> points1{center, polar_points[i - 1][j - 1], polar_points[i - 1][j], polar_points[i][j - 1]};
-            object3d_data.emplace_back(points1, tetra_v1, tetra_v2,  arg_tetra_type);
+            std::array<std::array<double, 3>, 4> points1{
+                center, polar_points[i - 1][j - 1], polar_points[i - 1][j], polar_points[i][j - 1]};
+            object3d_data.emplace_back(points1, tetra_v1, tetra_v2, arg_tetra_type);
 
-            std::array<std::array<double, 3>, 4> points2{center, polar_points[i][j - 1], polar_points[i][j], polar_points[i - 1][j]};
-            object3d_data.emplace_back(points2, tetra_v1, tetra_v2,  arg_tetra_type);
+            std::array<std::array<double, 3>, 4> points2{
+                center, polar_points[i][j - 1], polar_points[i][j], polar_points[i - 1][j]};
+            object3d_data.emplace_back(points2, tetra_v1, tetra_v2, arg_tetra_type);
         }
 
         std::array<std::array<double, 3>, 4> points1{center, polar_points[i - 1][line_len - 1],
-                                             polar_points[i - 1][0],
-                                             polar_points[i][line_len - 1]};
+                                                     polar_points[i - 1][0],
+                                                     polar_points[i][line_len - 1]};
         object3d_data.emplace_back(points1, tetra_v1, tetra_v2, arg_tetra_type);
 
         std::array<std::array<double, 3>, 4> points2{center, polar_points[i][line_len - 1],
-                                             polar_points[i][0], polar_points[i - 1][0]};
+                                                     polar_points[i][0], polar_points[i - 1][0]};
         object3d_data.emplace_back(points2, tetra_v1, tetra_v2, arg_tetra_type);
     }
 
@@ -217,7 +213,6 @@ void object3d_base::rotate_around_y_axis(double angle, double x0) {
     }
 }
 
-
 std::array<double, 4> object3d_base::get_boundaries() {
     auto pre_tmp = _data->at(0).get_boundaries();
 
@@ -232,10 +227,12 @@ std::array<double, 4> object3d_base::get_boundaries() {
      * TODO:
      * 1. move to main!
      */
-//        omp_set_num_threads(AMOUNT_OF_THREADS);
+    //        omp_set_num_threads(AMOUNT_OF_THREADS);
 
-#pragma omp parallel for default(none) shared(_data) reduction(max: x_max, y_max)        \
-reduction(min: x_min, y_min) schedule(dynamic, 8)
+#pragma omp parallel for default(none) shared(_data) reduction(max                                 \
+                                                               : x_max, y_max)                     \
+    reduction(min                                                                                  \
+              : x_min, y_min) schedule(dynamic, 8)
     for (size_t i = 0; i < size_of_vec; i++) {
         auto tmp = (*_data)[i].get_boundaries();
         if (tmp[0] > x_max) {

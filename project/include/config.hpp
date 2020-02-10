@@ -4,9 +4,8 @@
  * Render configuration
  */
 
-class app{
+class app {
 public:
-
     static app& instance() {
         static app instance;
         return instance;
@@ -37,7 +36,6 @@ private:
  * anyway, u're free to increase it
  */
 const int MAX_NUMBER_OF_THREADS = 32;
-
 
 /*
  * binary system main properties and main constants

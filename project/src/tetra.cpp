@@ -1,7 +1,9 @@
 #include <tetra.hpp>
 
-tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2, tetra_type tmp_tetra_type)
-    : _points(points), _tetra_values({v1, v2}), _tetra_type(tmp_tetra_type) {}
+tetra::tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2,
+             tetra_type tmp_tetra_type)
+    : _points(points), _tetra_values({v1, v2}), _tetra_type(tmp_tetra_type) {
+}
 
 void tetra::rotate_around_x_axis(double angle) {
     for (auto& i : _points) {
@@ -46,7 +48,6 @@ void tetra::point_rotate_around_x_axis(double alpha, std::array<double, 3>& poin
     point[1] = point[1] * cos(alpha) - point[2] * sin(alpha);
     point[2] = tmp_point1 * sin(alpha) + point[2] * cos(alpha);
 }
-
 
 void tetra::point_rotate_around_y_axis(double alpha, std::array<double, 3>& point, double x0) {
     /*

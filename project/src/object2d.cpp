@@ -1,6 +1,6 @@
 #include <object2d.hpp>
 
-object2d::object2d(const std::pair<float_matrix, float_matrix>& object2d_data) {
+object2d::object2d(const std::pair<double_matrix, double_matrix>& object2d_data) {
     _object2d_data = object2d_data;
 }
 

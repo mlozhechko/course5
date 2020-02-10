@@ -64,8 +64,6 @@ private:
                                        const std::array<double, 3>& p3);
 
     double _x, _y;
-    //    bool alternation_flag{false};
-
     void ts_tetra_intersections_pushback(std::bitset<32> data);
 
     /*

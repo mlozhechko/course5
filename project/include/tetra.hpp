@@ -7,11 +7,12 @@
 
 enum class tetra_value : size_t { alpha = 0, solid_color = 0, Q = 1 };
 
-enum class tetra_type {transparent = 0, solid = 1};
+enum class tetra_type { transparent = 0, solid = 1 };
 
 class tetra {
 public:
-    explicit tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2, tetra_type ttype = tetra_type::transparent);
+    explicit tetra(const std::array<std::array<double, 3>, 4>& points, double v1, double v2,
+                   tetra_type ttype = tetra_type::transparent);
 
     const std::array<double, 3>& operator[](size_t i) const {
         return _points[i];
@@ -35,7 +36,8 @@ public:
 
 private:
     static void point_rotate_around_x_axis(double alpha, std::array<double, 3>& point);
-    static void point_rotate_around_y_axis(double alpha, std::array<double, 3>& point, double x0 = 0);
+    static void point_rotate_around_y_axis(double alpha, std::array<double, 3>& point,
+                                           double x0 = 0);
 
     friend std::ostream& operator<<(std::ostream& os, const tetra& lt);
 

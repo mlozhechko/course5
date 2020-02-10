@@ -54,8 +54,9 @@ double plane::line_rev_function_eq(const double* p1, const double* p2, double y)
     return (p1[0] - p2[0]) * (y - p1[1]) / (p1[1] - p2[1]) + p1[0];
 }
 
-size_t plane::find_intersections_with_polygon(std::array<const double *, 3> points, size_t id, size_t polygon_id,
-                                              int internal_thread_id, bool is_solid, double solid_color) {
+size_t plane::find_intersections_with_polygon(std::array<const double*, 3> points, size_t id,
+                                              size_t polygon_id, int internal_thread_id,
+                                              bool is_solid, double solid_color) {
     size_t counter(0);
 
     std::sort(points.begin(), points.end(), [](auto& a, auto& b) { return a[1] > b[1]; });
@@ -91,8 +92,6 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
     double y_max = points[0][1];
     double y_min = points[2][1];
 
-    //    const size_t y_max_index = std::floor((y_max - _global_boundaries[3]) / _step_y);
-    //    const size_t y_min_index = std::ceil((y_min - _global_boundaries[3]) / _step_y);
     const size_t y_max_index = std::floor(get_pixel_by_y(y_max));
     const size_t y_min_index = std::ceil(get_pixel_by_y(y_min));
 
@@ -120,9 +119,7 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
                 x_min = line_rev_function_eq(points[0], points[1], y_it);
             }
         }
-        //
-        //        const size_t x_max_index = std::floor((x_max - _global_boundaries[1]) / _step_x);
-        //        const size_t x_min_index = std::ceil((x_min - _global_boundaries[1]) / _step_x);
+
         const size_t x_max_index = std::floor(get_pixel_by_x(x_max));
         const size_t x_min_index = std::ceil(get_pixel_by_x(x_min));
 
@@ -142,8 +139,8 @@ size_t plane::find_intersections_with_polygon(std::array<const double *, 3> poin
 }
 
 object2d plane::trace_rays(const tetra_value value_alpha, const tetra_value value_Q) {
-    std::vector<std::vector<float>> result_x{};
-    std::vector<std::vector<float>> result_y{};
+    std::vector<std::vector<double>> result_x{};
+    std::vector<std::vector<double>> result_y{};
     result_x.resize(_lines.size());
     result_y.resize(_lines.size());
 
@@ -158,7 +155,8 @@ object2d plane::trace_rays(const tetra_value value_alpha, const tetra_value valu
         result_y[i].resize(lines_size_2d);
     }
 
-#pragma omp parallel for default(none) shared(result_x, result_y, _data) schedule(dynamic, 8) collapse(2)
+#pragma omp parallel for default(none) shared(result_x, result_y, _data) schedule(dynamic, 8)      \
+    collapse(2)
     for (size_t i = 0; i < lines_size_1d; i++) {
         for (size_t j = 0; j < lines_size_2d; j++) {
             _lines[i][j].calculate_intersections(*_data);
@@ -232,7 +230,6 @@ std::array<double, 3> vector_multiplication(const std::array<double, 3>& m1,
 std::array<double, 3> rotate_vector_around_y_axis(const std::array<double, 3>& line_vector,
                                                   double alpha) {
     std::array<double, 3> res{};
-    //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[2] * sin(alpha);
     res[1] = line_vector[1];
     res[2] = -line_vector[0] * sin(alpha) + line_vector[2] * cos(alpha);
@@ -243,7 +240,6 @@ std::array<double, 3> rotate_vector_around_y_axis(const std::array<double, 3>& l
 std::array<double, 3> rotate_vector_around_z_axis(const std::array<double, 3>& line_vector,
                                                   double alpha) {
     std::array<double, 3> res{};
-    //    double tmp = line_vector[0];
     res[0] = line_vector[0] * cos(alpha) + line_vector[1] * sin(alpha);
     res[1] = -line_vector[0] * sin(alpha) + line_vector[1] * cos(alpha);
     res[2] = line_vector[2];
@@ -257,14 +253,13 @@ void add_vector(std::array<double, 3>& arr1, const std::array<double, 3>& arr2) 
     }
 }
 
-plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d, std::vector<double> global_boundaries) {
+plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d,
+             std::vector<double> global_boundaries) {
     const size_t gb_size = global_boundaries.size();
     if ((gb_size > 0) && (gb_size != 4)) {
         throw std::runtime_error("plane initializer. wrong manual boundaries");
     }
     bool is_manual_boundaries = !global_boundaries.empty();
-
-//    std::cout << "im " << is_manual_boundaries << std::endl;
 
     if (objects3d.empty()) {
         throw std::runtime_error("plane initializer. empty set of objects to render");
@@ -289,7 +284,8 @@ plane::plane(size_t res_x, size_t res_y, std::vector<object3d_base> objects3d, s
 
     for (size_t i = 1; i < objects3d_size; i++) {
         auto tmp_data = objects3d.at(i).get_pointer();
-        _data->insert(_data->end(), std::make_move_iterator(tmp_data->begin()), std::make_move_iterator(tmp_data->end()));
+        _data->insert(_data->end(), std::make_move_iterator(tmp_data->begin()),
+                      std::make_move_iterator(tmp_data->end()));
     }
 
     _x = res_x;
